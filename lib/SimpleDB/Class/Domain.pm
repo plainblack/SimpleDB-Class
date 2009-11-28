@@ -14,7 +14,7 @@ class_has 'name' => (
         },
 );
 
-has 'schema' => (
+has 'simpledb' => (
     is          => 'ro',
     required    => 1,
 );
@@ -36,7 +36,7 @@ sub add_attributes {
 #--------------------------------------------------------
 sub create {
     my ($self) = @_;
-    $self->schema->send_request('CreateDomain', {
+    $self->simpledb->send_request('CreateDomain', {
         DomainName => $self->name,
     });
 }
@@ -44,7 +44,7 @@ sub create {
 #--------------------------------------------------------
 sub find {
     my ($self, $id) = @_;
-    my $result = $self->schema->send_request('GetAttributes', {
+    my $result = $self->simpledb->send_request('GetAttributes', {
         ItemName => $id
     });
     my $list = $result->{GetAttributesResult}{Attribute};
@@ -81,7 +81,7 @@ sub count {
         where   => $clauses,
         output  => 'count(*)',
     );
-    my $result = $self->schema->send_request('Select', {
+    my $result = $self->simpledb->send_request('Select', {
         SelectExpression    => $select->to_sql,
     });
     return $result->{SelectResult}{Item}{Attribute}{Value};

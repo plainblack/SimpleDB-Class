@@ -1,6 +1,7 @@
-package SimpleDB::Class::Schema;
+package SimpleDB::Class;
 
-# Based on Amazon::SimpleDB::Client distributed by Amazon Technologies, Inc.
+our $VERSION = 0.0001;
+# Based on Amazon::SimpleDB::Client distributed by Amazon Technologies, Inc and DBIx::Class by Matt Trout and others
 
 use Moose;
 use MooseX::ClassAttribute;
