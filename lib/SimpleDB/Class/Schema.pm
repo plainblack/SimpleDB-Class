@@ -1,4 +1,4 @@
-package SimpleDB::Class::DB;
+package SimpleDB::Class::Schema;
 
 # Based on Amazon::SimpleDB::Client distributed by Amazon Technologies, Inc.
 

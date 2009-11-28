@@ -57,7 +57,7 @@ sub copy {
 sub delete {
     my ($self) = @_;
     my $domain = $self->domain;
-    $domain->db->send_request('DeleteAttributes', {ItemName => $self->name, DomainName=>$domain->name});
+    $domain->schema->send_request('DeleteAttributes', {ItemName => $self->name, DomainName=>$domain->name});
 }
 
 #--------------------------------------------------------
@@ -67,7 +67,7 @@ sub delete_attribute {
     delete $attributes->{$name};
     $self->attributes($attributes);
     my $domain = $self->domain;
-    $domain->db->send_request('DeleteAttributes', { ItemName => $self->name, DomainName => $domain->name, 'Attribute.0.Name' => $name } );
+    $domain->schema->send_request('DeleteAttributes', { ItemName => $self->name, DomainName => $domain->name, 'Attribute.0.Name' => $name } );
 }
 
 #--------------------------------------------------------
@@ -95,7 +95,7 @@ sub put {
             $i++;
         }
     }
-    $domain->db->send_request('PutAttributes', $params);
+    $domain->schema->send_request('PutAttributes', $params);
 }
 
 
