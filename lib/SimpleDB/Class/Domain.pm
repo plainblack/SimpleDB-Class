@@ -10,7 +10,7 @@ class_has 'name' => (
     is      => 'rw',
     trigger => sub {
         my ($class, $new, $old) = @_;
-        SimpleDB::Class::DB->add_domain_alias($new => $class);
+        SimpleDB::Class->add_domain_alias($new => $class);
         },
 );
 

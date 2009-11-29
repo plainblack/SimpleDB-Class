@@ -1,5 +1,4 @@
 use Test::More tests => 28;
-use Test::Deep;
 use Tie::IxHash;
 use lib '../lib';
 

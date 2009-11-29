@@ -3,7 +3,7 @@ package SimpleDB::Class::Item;
 use Moose;
 use UUID::Tiny;
 
-has name = (
+has name => (
     is          => 'ro',
     builder     => 'generate_uuid',
     lazy        => 1,
@@ -38,7 +38,11 @@ sub BUILD {
     my ($self) = @_;
     my $attributes = $self->attributes;
     foreach my $name (keys %{$attributes}) {
-        $self->add_attribute($name, $attributes->{$name});
+        has $name => (
+            is      => 'rw',
+            default => $attributes->{$name},
+            lazy    => 1,
+        );
     }
 }
 
@@ -77,9 +81,9 @@ sub generate_uuid {
 
 #--------------------------------------------------------
 sub put {
-    my ($self, $params) = @_;
-    foreach my $param (@{$params}) {
-        $self->$param($params->{$param});
+    my ($self, $attributes) = @_;
+    foreach my $attribute (@{$attributes}) {
+        $self->$attribute($attributes->{$attribute});
     }
     my $domain = $self->domain;
     my $params = {ItemName => $self->name, DomainName=>$domain->name};
@@ -89,7 +93,7 @@ sub put {
         unless ($values eq 'ARRAY') {
             $values = [$values];
         }
-        foreach my $value () {
+        foreach my $value (@{$values}) {
             $params->{'Attribute.'.$i.'.Name'} = $name;
             $params->{'Attribute.'.$i.'.Value'} = $value;
             $i++;
@@ -99,5 +103,4 @@ sub put {
 }
 
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+1;
