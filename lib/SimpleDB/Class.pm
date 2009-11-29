@@ -70,13 +70,20 @@ sub construct_request {
 }
 
 #--------------------------------------------------------
-sub domain {
+sub determine_domain_class {
     my ($self, $moniker) = @_;
     my $class = $self->domain_aliases->{$moniker};
     unless ($class) {
         $class = $moniker;
     }
-    return $class->new(db=>$self); 
+    return $class;
+}
+
+#--------------------------------------------------------
+sub domain {
+    my ($self, $moniker) = @_;
+    my $class = $self->determine_domain_class($moniker);
+    return $class->new(simpledb=>$self); 
 }
 
 #--------------------------------------------------------

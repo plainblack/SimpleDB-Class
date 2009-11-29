@@ -78,8 +78,9 @@ sub insert {
 sub count {
     my ($self, $clauses) = @_;
     my $select = SimpleDB::Class::Select->new(
-        where   => $clauses,
-        output  => 'count(*)',
+        domain_name => $self->name,
+        where       => $clauses,
+        output      => 'count(*)',
     );
     my $result = $self->simpledb->send_request('Select', {
         SelectExpression    => $select->to_sql,
