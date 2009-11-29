@@ -1,4 +1,4 @@
-use Test::More tests => 15;
+use Test::More tests => 28;
 use Test::Deep;
 use Tie::IxHash;
 use lib '../lib';
@@ -59,6 +59,88 @@ $select = SimpleDB::Class::Select->new(
     order_by        => ['foo'],
     );
 is($select->to_sql, 'select * from `test` order by `foo` desc', "sort query implied descending");
+
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { 'foo' => ['>', '3']},
+    );
+is($select->to_sql, "select * from `test` where `foo`>'3'", "query with < where");
+
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { 'foo' => ['<', '3']},
+    );
+is($select->to_sql, "select * from `test` where `foo`<'3'", "query with < where");
+
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { 'foo' => ['>=', '3']},
+    );
+is($select->to_sql, "select * from `test` where `foo`>='3'", "query with >= where");
+
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { 'foo' => ['<=', '3']},
+    );
+is($select->to_sql, "select * from `test` where `foo`<='3'", "query with <= where");
+
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { 'foo' => ['!=', '3']},
+    );
+is($select->to_sql, "select * from `test` where `foo`!='3'", "query with != where");
+
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { 'foo' => ['like', '3%']},
+    );
+is($select->to_sql, "select * from `test` where `foo` like '3%'", "query with like where");
+
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { 'foo' => ['not like', '3%']},
+    );
+is($select->to_sql, "select * from `test` where `foo` not like '3%'", "query with not like where");
+
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { 'foo' => ['between', 2,5]},
+    );
+is($select->to_sql, "select * from `test` where `foo` between '2' and '5'", "query with between where");
+
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { 'foo' => ['in', 2,5,7]},
+    );
+is($select->to_sql, "select * from `test` where `foo` in ('2', '5', '7')", "query with in where");
+
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { 'foo' => ['every', 2,5,7]},
+    );
+is($select->to_sql, "select * from `test` where every(`foo`) in ('2', '5', '7')", "query with every where");
+
+tie my %intersection, 'Tie::IxHash', foo=>2, bar=>'this';
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { '-intersection' => \%intersection},
+    );
+is($select->to_sql, "select * from `test` where (`foo`='2' intersection `bar`='this')", "query with or where");
+
+tie my %or, 'Tie::IxHash', foo=>2, bar=>'this';
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { '-or' => \%or},
+    );
+is($select->to_sql, "select * from `test` where (`foo`='2' or `bar`='this')", "query with or where");
+
+tie my %and, 'Tie::IxHash', bar=>'this', that=>1;
+tie my %or, 'Tie::IxHash', foo=>2, '-and'=>\%and;
+$select = SimpleDB::Class::Select->new(
+    domain_name     => 'test',
+    where           => { '-or' => \%or},
+    );
+is($select->to_sql, "select * from `test` where (`foo`='2' or (`bar`='this' and `that`='1'))", "query with or where");
 
 tie my %where, 'Tie::IxHash', foo=>2, bar=>'this';
 $select = SimpleDB::Class::Select->new(

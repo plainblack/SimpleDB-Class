@@ -63,25 +63,25 @@ sub recurse_where {
             if (ref $value eq 'ARRAY') {
                 my $cmp = shift @{$value};
                 if ($cmp eq '>') {
-                    push @sets, $attribute.'>'.$self->quote_value($value);
+                    push @sets, $attribute.'>'.$self->quote_value($value->[0]);
                 }
                 elsif ($cmp eq '<') {
-                    push @sets, $attribute.'<'.$self->quote_value($value);
+                    push @sets, $attribute.'<'.$self->quote_value($value->[0]);
                 }
                 elsif ($cmp eq '<=') {
-                    push @sets, $attribute.'<='.$self->quote_value($value);
+                    push @sets, $attribute.'<='.$self->quote_value($value->[0]);
                 }
                 elsif ($cmp eq '>=') {
-                    push @sets, $attribute.'>='.$self->quote_value($value);
+                    push @sets, $attribute.'>='.$self->quote_value($value->[0]);
                 }
                 elsif ($cmp eq '!=') {
-                    push @sets, $attribute.'!='.$self->quote_value($value);
+                    push @sets, $attribute.'!='.$self->quote_value($value->[0]);
                 }
                 elsif ($cmp eq 'like') {
-                    push @sets, $attribute.' like '.$self->quote_value($value);
+                    push @sets, $attribute.' like '.$self->quote_value($value->[0]);
                 }
                 elsif ($cmp eq 'not like') {
-                    push @sets, $attribute.' not like '.$self->quote_value($value);
+                    push @sets, $attribute.' not like '.$self->quote_value($value->[0]);
                 }
                 elsif ($cmp eq 'in') {
                     my @values = map {$self->quote_value($_)} @{$value};
