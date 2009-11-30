@@ -19,6 +19,7 @@ has result => (
     isa         => 'HashRef',
     predicate   => 'has_result',
     default     => sub {{}},
+    lazy        => 1,
 );
 
 has iterator => (
@@ -52,10 +53,13 @@ sub next {
 
     # get the current results
     my $result = ($self->has_result) ? $self->result : $self->fetch_result;
+    my $items = (ref $result->{SelectResult}{Item} eq 'ARRAY') ? $result->{SelectResult}{Item} : [$result->{SelectResult}{Item}];
+    my $num_items = scalar @{$items};
+    return undef unless $num_items > 0;
 
     # fetch more results if needed
     my $iterator = $self->iterator;
-    if ($iterator >= scalar(@{$result->{SelectResult}})) {
+    if ($iterator >= $num_items) {
         if (exists $result->{SelectResult}{NextToken}) {
             $self->iterator(0);
             $iterator = 0;
@@ -67,13 +71,13 @@ sub next {
     }
 
     # iterate
-    my $items = $result->{SelectResult}{Item};
-    my $item = (ref $items eq 'ARRAY') ? $items->[$iterator] : $items;
+    my $item = $items->[$iterator];
+    return undef unless defined $item;
     $iterator++;
     $self->iterator($iterator);
 
     # make the item object
-    return $self->handle_item($self->domain, $item->{ItemName}, $item->{Attribute});
+    return $self->handle_item($self->domain, $item->{Name}, $item->{Attribute});
 }
 
 #--------------------------------------------------------

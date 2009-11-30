@@ -1,4 +1,4 @@
-use Test::More tests => 10;
+use Test::More tests => 13;
 use lib ('../lib', 'lib');
 
 
@@ -23,6 +23,14 @@ ok($domain->insert({color=>'red',size=>'large'}, 'largered'), 'adding item with 
 ok($domain->insert({color=>'blue',size=>'small'}), 'adding item without id');
 is($domain->count, 2, 'should be 2 items');
 is($domain->find('largered')->size, 'large', 'find() works');
+
+$domain->insert({color=>'orange',size=>'large'});
+$domain->insert({color=>'green',size=>'small'});
+$domain->insert({color=>'black',size=>'huge'});
+my $foos = $domain->search({size=>'small'});
+isa_ok($foos, 'SimpleDB::Class::ResultSet');
+isa_ok($foos->next, 'SimpleDB::Class::Item');
+is($foos->next->size, 'small', 'fetched an item from the result set');
 ok($domain->delete,'deleting domain');
 ok(!grep({$_ eq 'foo_domain'} @{$foo->list_domains}), 'domain deleted');
 
