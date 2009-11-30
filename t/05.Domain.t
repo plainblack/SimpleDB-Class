@@ -7,12 +7,15 @@ use_ok( 'SimpleDB::Class::Domain' );
 
 my @attributes = ('foo', 'bar', 'xxx');
 
-SimpleDB::Class::Domain->name('test');
-is(SimpleDB::Class::Domain->name, 'test', 'domain name assignment works');
+SimpleDB::Class::Domain->set_name('test');
+my $db = SimpleDB::Class->new(access_key=>'access', secret_key=>'secret');
+
+my $domain = $db->domain('SimpleDB::Class::Domain');
+is($domain->name, 'test', 'domain name assignment works');
 
 SimpleDB::Class::Domain->add_attributes(@attributes);
 cmp_deeply(
-    SimpleDB::Class::Domain->attributes,
+    $domain->attributes,
     \@attributes,
     'attributes work'
 );

@@ -26,7 +26,12 @@ has 'secret_key' => (
     documentation   => 'The AWS SimpleDB secret access key id provided by Amazon.',
 );
 
-class_has 'domain_aliases' => (
+class_has 'domain_names' => (
+    is      => 'rw',
+    default => sub{{}},
+);
+
+class_has 'domain_instances' => (
     is      => 'rw',
     default => sub{{}},
 );
@@ -39,11 +44,40 @@ sub load_namespaces {
 }
 
 #--------------------------------------------------------
-sub add_domain_alias {
-    my ($class, %new_alias) = @_;
-    my %aliases = (%{$class->domain_aliases}, %new_alias);
-    __PACKAGE__->domain_aliases(\%aliases);
-    return \%aliases;
+sub _add_domain {
+    my ($class, $name, $object) = @_;
+    my $classname = ref $object;
+    my $names = $class->domain_names;
+    $names->{$name} = $classname;
+    __PACKAGE__->domain_names($names);
+    my $instances = $class->domain_instances;
+    $instances->{$classname} = $object;
+    __PACKAGE__->domain_instances($instances);
+    return $names;
+}
+
+#--------------------------------------------------------
+sub determine_domain_class {
+    my ($self, $moniker) = @_;
+    my $class = $self->domain_names->{$moniker};
+    unless ($class) {
+        $class = $moniker;
+    }
+    return $class;
+}
+
+#--------------------------------------------------------
+sub determine_domain_instance {
+    my ($self, $classname) = @_;
+    return $self->domain_instances->{$classname};
+}
+
+#--------------------------------------------------------
+sub domain {
+    my ($self, $moniker) = @_;
+    my $domain = $self->determine_domain_instance($self->determine_domain_class($moniker));
+    $domain->simpledb($self);
+    return $domain;
 }
 
 #--------------------------------------------------------
@@ -77,23 +111,6 @@ sub construct_request {
     $request->content($post_data);
 
     return $request;
-}
-
-#--------------------------------------------------------
-sub determine_domain_class {
-    my ($self, $moniker) = @_;
-    my $class = $self->domain_aliases->{$moniker};
-    unless ($class) {
-        $class = $moniker;
-    }
-    return $class;
-}
-
-#--------------------------------------------------------
-sub domain {
-    my ($self, $moniker) = @_;
-    my $class = $self->determine_domain_class($moniker);
-    return $class->new(simpledb=>$self); 
 }
 
 #--------------------------------------------------------

@@ -36,11 +36,43 @@ sub add_attribute {
 #--------------------------------------------------------
 sub BUILD {
     my ($self) = @_;
+
+    # add attributes
     my $attributes = $self->attributes;
     foreach my $name (keys %{$attributes}) {
         has $name => (
             is      => 'rw',
             default => $attributes->{$name},
+            lazy    => 1,
+        );
+    }
+
+    my $domain = $self->domain;
+
+    # add parents
+    my $parents = $domain->_parents;
+    foreach my $parent (keys %{$parents}) {
+        my ($classname, $attribute) = @{$parents->{$parent}};
+        has $parent => (
+            is      => 'ro',
+            default => sub {
+                my $self = shift;
+                return $domain->simpledb->domain($classname)->find($self->$attribute);
+                },
+            lazy    => 1,
+        );
+    }
+
+    # add children
+    my $children = $domain->_children;
+    foreach my $child (keys %{$children}) {
+        my ($classname, $attribute) = @{$children->{$child}};
+        has $child => (
+            is      => 'ro',
+            default => sub {
+                my $self = shift;
+                return $domain->simpledb->domain($classname)->search({$attribute => $self->$attribute});
+                },
             lazy    => 1,
         );
     }
