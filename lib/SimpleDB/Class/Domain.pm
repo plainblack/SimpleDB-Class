@@ -1,12 +1,12 @@
 package SimpleDB::Class::Domain;
 
 use Moose;
-use MooseX::ClassAttribute;
 use SimpleDB::Class::Item;
 use SimpleDB::Class::Select;
 use SimpleDB::Class::ResultSet;
 
 
+#--------------------------------------------------------
 sub set_name {
     my ($class, $name) = @_;
     SimpleDB::Class->_add_domain($name => $class->new(name=>$name));
@@ -27,13 +27,13 @@ has 'attributes' => (
     default => sub{[]},
 );
 
-class_has '_parents' => (
+has 'parents' => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub{{}},
 );
 
-class_has '_children' => (
+has 'children' => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub{{}},
@@ -42,17 +42,19 @@ class_has '_children' => (
 #--------------------------------------------------------
 sub belongs_to {
     my ($class, $name, $classname, $attribute) = @_;
-    my $parents = $class->_parents;
+    my $self = SimpleDB::Class->determine_domain_instance($class);
+    my $parents = $self->parents;
     $parents->{$name} = [$classname, $attribute];
-    $class->_parents($parents);
+    $self->parents($parents);
 };
 
 #--------------------------------------------------------
 sub has_many {
     my ($class, $name, $classname, $attribute) = @_;
-    my $children = $class->_children;
+    my $self = SimpleDB::Class->determine_domain_instance($class);
+    my $children = $self->children;
     $children->{$name} = [$classname, $attribute];
-    $class->_children($children);
+    $self->children($children);
 };
 
 #--------------------------------------------------------

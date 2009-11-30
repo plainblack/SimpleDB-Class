@@ -50,7 +50,7 @@ sub BUILD {
     my $domain = $self->domain;
 
     # add parents
-    my $parents = $domain->_parents;
+    my $parents = $domain->parents;
     foreach my $parent (keys %{$parents}) {
         my ($classname, $attribute) = @{$parents->{$parent}};
         has $parent => (
@@ -64,7 +64,7 @@ sub BUILD {
     }
 
     # add children
-    my $children = $domain->_children;
+    my $children = $domain->children;
     foreach my $child (keys %{$children}) {
         my ($classname, $attribute) = @{$children->{$child}};
         has $child => (

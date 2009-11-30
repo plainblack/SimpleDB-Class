@@ -17,7 +17,6 @@ my $domain = $foo->domain('foo_domain');
 isa_ok($domain,'Foo::Domain');
 ok($domain->create, 'create a domain');
 ok(grep({$_ eq 'foo_domain'} @{$foo->list_domains}), 'got created domain');
-print join('|',@{$foo->list_domains})."\n";
 is($domain->count, 0, 'should be 0 items');
 ok($domain->insert({color=>'red',size=>'large',parentId=>'one'}, 'largered'), 'adding item with id');
 ok($domain->insert({color=>'blue',size=>'small',parentId=>'two'}), 'adding item without id');
