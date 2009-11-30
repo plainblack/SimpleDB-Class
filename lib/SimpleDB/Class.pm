@@ -12,6 +12,7 @@ use HTTP::Request;
 use URI::Escape qw(uri_escape_utf8);
 use Time::HiRes qw(usleep);
 use SimpleDB::Class::Exception;
+use Module::Find;
 
 has 'access_key' => (
     is              => 'ro',
@@ -29,6 +30,13 @@ class_has 'domain_aliases' => (
     is      => 'rw',
     default => sub{{}},
 );
+
+#--------------------------------------------------------
+sub load_namespaces {
+    my ($class, $namespace) = @_;
+    $namespace ||= $class; # if no namespace is set
+    useall $namespace;
+}
 
 #--------------------------------------------------------
 sub add_domain_alias {

@@ -11,7 +11,6 @@ unless (defined $access && defined $secret) {
 
 
 use Foo;
-use Foo::Domain;
 
 my $foo = Foo->new(secret_key=>$secret, access_key=>$access);
 my $domain = $foo->domain('foo_domain');
