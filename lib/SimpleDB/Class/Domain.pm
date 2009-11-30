@@ -4,7 +4,7 @@ use Moose;
 use MooseX::ClassAttribute;
 use SimpleDB::Class::Item;
 use SimpleDB::Class::Select;
-
+use SimpleDB::Class::ResultSet;
 
 class_has 'name' => (
     is      => 'rw',
@@ -42,34 +42,32 @@ sub create {
 }
 
 #--------------------------------------------------------
+sub delete {
+    my ($self) = @_;
+    $self->simpledb->send_request('DeleteDomain', {
+        DomainName => $self->name,
+    });
+}
+
+#--------------------------------------------------------
 sub find {
     my ($self, $id) = @_;
     my $result = $self->simpledb->send_request('GetAttributes', {
-        ItemName => $id
+        ItemName    => $id,
+        DomainName  => $self->name,
     });
     my $list = $result->{GetAttributesResult}{Attribute};
-    unless (ref $list eq 'ARRAY') {
-        $list = [$list];
-    }
-    my %attributes;
-    foreach my $attribute (@{$list}) {
-        if (exists $attributes{$attribute->{Name}}) {
-            if (ref $attributes{$attribute->{Name}} ne 'ARRAY') {
-                $attributes{$attribute->{Name}} = [$attributes{$attribute->{Name}}];
-            }
-            push @{$attributes{$attribute->{Name}}}, $attribute->{Value};
-        }
-        else {
-            $attributes{$attribute->{Name}} = $attribute->{Value};
-        }
-    }
-    return SimpleDB::Class::Item->new(domain=>$self, name=>$id, attributes=>\%attributes);
+    return SimpleDB::Class::ResultSet->handle_item($self, $id, $list);
 }
 
 #--------------------------------------------------------
 sub insert {
     my ($self, $attributes, $id) = @_;
-    my $item = SimpleDB::Class::Item->new(domain=>$self, attributes=>$attributes, name=>$id);
+    my %params = (domain=>$self, attributes=>$attributes);
+    if (defined $id && $id ne '') {
+        $params{name} = $id;
+    }
+    my $item = SimpleDB::Class::Item->new(\%params);
     $item->put;
     return $item;
 }
@@ -90,7 +88,11 @@ sub count {
 
 #--------------------------------------------------------
 sub search {
-    my ($self) = @_;
+    my ($self, $where) = @_;
+    return SimpleDB::Class::ResultSet->new(
+        domain      => $self,
+        where       => $where,
+        );
 }
 
 no Moose;

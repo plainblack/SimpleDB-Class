@@ -48,6 +48,8 @@ sub construct_request {
     $params->{'AWSAccessKeyId'}   = $self->access_key;
     $params->{'Version'}          = '2009-04-15';
     $params->{'Timestamp'}        = sprintf("%04d-%02d-%02dT%02d:%02d:%02d.000Z", sub { ($_[5]+1900, $_[4]+1, $_[3], $_[2], $_[1], $_[0]) }->(gmtime(time)));
+    $params->{'SignatureMethod'}  = 'HmacSHA256';
+    $params->{'SignatureVersion'} = 2;
 
     # construct post data
     my $post_data;

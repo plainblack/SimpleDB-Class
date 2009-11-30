@@ -129,7 +129,10 @@ sub to_sql {
     # where
     my $where='';
     if ($self->has_where) {
-        $where = ' where '.$self->recurse_where($self->where);
+        $where = $self->recurse_where($self->where);
+        if ($where ne '') {
+            $where = ' where '.$where;
+        }
     }
 
     # sort
@@ -150,6 +153,7 @@ sub to_sql {
         $limit = ' limit '.$self->limit;
     }
 
+    print 'select '.$output.' from '.$self->quote_attribute($self->domain_name).$where.$sort.$limit."\n";
     return 'select '.$output.' from '.$self->quote_attribute($self->domain_name).$where.$sort.$limit;
 }
 
