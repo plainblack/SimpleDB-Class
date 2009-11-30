@@ -3,7 +3,7 @@ package SimpleDB::Class::Item;
 use Moose;
 use UUID::Tiny;
 
-has name => (
+has id => (
     is          => 'ro',
     builder     => 'generate_uuid',
     lazy        => 1,
@@ -85,7 +85,7 @@ sub copy {
     foreach my $name (keys %{$self->attributes}) {
         $properties{$name} = $self->$name;
     }
-    my $new = $self->create(domain => $self->domain, attributes => \%properties, name=>$id);
+    my $new = $self->new(domain => $self->domain, attributes => \%properties, id=>$id);
     $new->put;
 }
 
@@ -93,7 +93,7 @@ sub copy {
 sub delete {
     my ($self) = @_;
     my $domain = $self->domain;
-    $domain->simpledb->send_request('DeleteAttributes', {ItemName => $self->name, DomainName=>$domain->name});
+    $domain->simpledb->send_request('DeleteAttributes', {ItemName => $self->id, DomainName=>$domain->name});
 }
 
 #--------------------------------------------------------
@@ -103,7 +103,7 @@ sub delete_attribute {
     delete $attributes->{$name};
     $self->attributes($attributes);
     my $domain = $self->domain;
-    $domain->simpledb->send_request('DeleteAttributes', { ItemName => $self->name, DomainName => $domain->name, 'Attribute.0.Name' => $name } );
+    $domain->simpledb->send_request('DeleteAttributes', { ItemName => $self->id, DomainName => $domain->name, 'Attribute.0.Name' => $name } );
 }
 
 #--------------------------------------------------------
@@ -118,7 +118,7 @@ sub put {
         $self->$attribute($attributes->{$attribute});
     }
     my $domain = $self->domain;
-    my $params = {ItemName => $self->name, DomainName=>$domain->name};
+    my $params = {ItemName => $self->id, DomainName=>$domain->name};
     my $i = 0;
     foreach my $name (keys %{$self->attributes}) {
         my $values = $self->$name;

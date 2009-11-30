@@ -4,9 +4,7 @@ use lib '../lib';
 use SimpleDB::Class;
 
 my $access = $ENV{SIMPLEDB_ACCESS_KEY};
-print '|'.$access."|\n";
 my $secret = $ENV{SIMPLEDB_SECRET_KEY};
-print '|'.$secret."|\n";
 
 unless (defined $access && defined $secret) {
     die "You need to set environment variables SIMPLEDB_ACCESS_KEY and SIMPLEDB_SECRET_KEY to run these tests.";

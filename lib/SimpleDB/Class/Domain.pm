@@ -11,13 +11,6 @@ sub set_name {
     my ($class, $name) = @_;
     SimpleDB::Class->_add_domain($name => $class->new(name=>$name));
 }
-#class_has 'name' => (
-#    is      => 'rw',
-#    trigger => sub {
-#        my ($class, $new, $old) = @_;
-#        SimpleDB::Class->add_domain_alias($new => $class);
-#        },
-#);
 
 has 'name' => (
     is          => 'ro',
@@ -103,7 +96,7 @@ sub insert {
     my ($self, $attributes, $id) = @_;
     my %params = (domain=>$self, attributes=>$attributes);
     if (defined $id && $id ne '') {
-        $params{name} = $id;
+        $params{id} = $id;
     }
     my $item = SimpleDB::Class::Item->new(\%params);
     $item->put;
