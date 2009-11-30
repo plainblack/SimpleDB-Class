@@ -57,7 +57,7 @@ sub BUILD {
             is      => 'ro',
             default => sub {
                 my $self = shift;
-                return $domain->simpledb->domain($classname)->find($self->$attribute);
+                return $domain->simpledb->determine_domain_instance($classname)->find($self->$attribute);
                 },
             lazy    => 1,
         );
@@ -71,7 +71,7 @@ sub BUILD {
             is      => 'ro',
             default => sub {
                 my $self = shift;
-                return $domain->simpledb->domain($classname)->search({$attribute => $self->$attribute});
+                return $domain->simpledb->determine_domain_instance($classname)->search({$attribute => $self->$attribute});
                 },
             lazy    => 1,
         );
