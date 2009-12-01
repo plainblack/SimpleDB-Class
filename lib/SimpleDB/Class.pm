@@ -75,9 +75,7 @@ sub determine_domain_instance {
 #--------------------------------------------------------
 sub domain {
     my ($self, $moniker) = @_;
-    my $domain = $self->determine_domain_instance($self->determine_domain_class($moniker));
-    $domain->simpledb($self);
-    return $domain;
+    return $self->determine_domain_instance($self->determine_domain_class($moniker));
 }
 
 #--------------------------------------------------------

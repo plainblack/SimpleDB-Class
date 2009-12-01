@@ -1,12 +1,11 @@
 package SimpleDB::Class::ResultSet;
 
 use Moose;
-use SimpleDB::Class::Select;
+use SimpleDB::Class::SQL;
 
 has where => (
     is          => 'ro',
     isa         => 'HashRef',
-    required    => 1,
 );
 
 has domain => (
@@ -31,8 +30,8 @@ has iterator => (
 #--------------------------------------------------------
 sub fetch_result {
     my ($self) = @_;
-    my $select = SimpleDB::Class::Select->new(
-        domain_name => $self->domain->name,
+    my $select = SimpleDB::Class::SQL->new(
+        domain      => $self->domain,
         where       => $self->where,
     );
     my %params = (SelectExpression => $select->to_sql);
@@ -77,25 +76,32 @@ sub next {
     $self->iterator($iterator);
 
     # make the item object
-    return $self->handle_item($self->domain, $item->{Name}, $item->{Attribute});
+    return $self->handle_item($item->{Name}, $item->{Attribute});
 }
 
 #--------------------------------------------------------
 sub handle_item {
-    my ($class, $domain, $id, $list) = @_;
+    my ($self, $id, $list) = @_;
+    my $domain = $self->domain;
+    my $registered_attributes = $domain->attributes;
     unless (ref $list eq 'ARRAY') {
         $list = [$list];
     }
     my %attributes;
+    my $select = SimpleDB::Class::SQL->new(domain=>$self->domain); 
     foreach my $attribute (@{$list}) {
+
+        my $value = $select->parse_value($attribute->{Name}, $attribute->{Value});
+
+        # create expected hashref
         if (exists $attributes{$attribute->{Name}}) {
             if (ref $attributes{$attribute->{Name}} ne 'ARRAY') {
                 $attributes{$attribute->{Name}} = [$attributes{$attribute->{Name}}];
             }
-            push @{$attributes{$attribute->{Name}}}, $attribute->{Value};
+            push @{$attributes{$attribute->{Name}}}, $value;
         }
         else {
-            $attributes{$attribute->{Name}} = $attribute->{Value};
+            $attributes{$attribute->{Name}} = $value;
         }
     }
     return SimpleDB::Class::Item->new(domain=>$domain, name=>$id, attributes=>\%attributes);

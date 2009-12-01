@@ -2,7 +2,7 @@ package SimpleDB::Class::Domain;
 
 use Moose;
 use SimpleDB::Class::Item;
-use SimpleDB::Class::Select;
+use SimpleDB::Class::SQL;
 use SimpleDB::Class::ResultSet;
 
 
@@ -23,8 +23,8 @@ has 'simpledb' => (
 
 has 'attributes' => (
     is      => 'rw',
-    isa     => 'ArrayRef',
-    default => sub{[]},
+    isa     => 'HashRef',
+    default => sub{{}},
 );
 
 has 'parents' => (
@@ -59,11 +59,11 @@ sub has_many {
 
 #--------------------------------------------------------
 sub add_attributes {
-    my ($class, @new_attributes) = @_;
+    my ($class, %new_attributes) = @_;
     my $self = SimpleDB::Class->determine_domain_instance($class);
-    my @attributes = (@{$self->attributes}, @new_attributes);
-    $self->attributes(\@attributes);
-    return \@attributes;
+    my %attributes = (%{$self->attributes}, %new_attributes);
+    $self->attributes(\%attributes);
+    return \%attributes;
 }
 
 #--------------------------------------------------------
@@ -90,7 +90,7 @@ sub find {
         DomainName  => $self->name,
     });
     my $list = $result->{GetAttributesResult}{Attribute};
-    return SimpleDB::Class::ResultSet->handle_item($self, $id, $list);
+    return SimpleDB::Class::ResultSet->new(domain=>$self)->handle_item($id, $list);
 }
 
 #--------------------------------------------------------
@@ -108,8 +108,8 @@ sub insert {
 #--------------------------------------------------------
 sub count {
     my ($self, $clauses) = @_;
-    my $select = SimpleDB::Class::Select->new(
-        domain_name => $self->name,
+    my $select = SimpleDB::Class::SQL->new(
+        domain      => $self,
         where       => $clauses,
         output      => 'count(*)',
     );

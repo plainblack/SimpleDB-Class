@@ -1,13 +1,15 @@
-package SimpleDB::Class::Select;
+package SimpleDB::Class::SQL;
 
 use Moose;
+use DateTime;
+use DateTime::Format::Strptime;
 
 has 'output' => (
     is              => 'ro',
     default         => '*',
 );
 
-has 'domain_name' => (
+has 'domain' => (
     is              => 'ro',
     required        => 1,
 );
@@ -43,6 +45,69 @@ sub quote_attribute {
 }
 
 #--------------------------------------------------------
+sub parse_datetime {
+    my ($self, $value) = @_;
+    return DateTime::Format::Strptime::strptime('%Y%m%d%H%M%S%N%z',$value) || DateTime->now;
+}
+
+#--------------------------------------------------------
+sub parse_int {
+    my ($self, $value) = @_;
+    return $value-1000000000;
+}
+
+#--------------------------------------------------------
+sub parse_value {
+    my ($self, $name, $value) = @_;
+    my $registered_attributes = $self->domain->attributes;
+    # set default value
+    $value ||= $registered_attributes->{$name};
+    # find isa
+    my $isa = $registered_attributes->{$name}{isa} || '';
+    # pad integers
+    if ($isa eq 'Int') {
+        $value = $self->parse_int($value); 
+    }
+    # stringify dates
+    elsif ($isa eq 'DateTime') {
+        $value = $self->parse_datetime($value);
+    }
+    return $value;
+}
+
+#--------------------------------------------------------
+sub format_datetime {
+    my ($self, $value) = @_;
+    return DateTime::Format::Strptime::strftime('%Y%m%d%H%M%S%N%z',$value);
+}
+
+#--------------------------------------------------------
+sub format_int {
+    my ($self, $value) = @_;
+    return sprintf("%010d",$value+1000000000);
+}
+
+#--------------------------------------------------------
+sub format_value {
+    my ($self, $name, $value) = @_;
+    my $registered_attributes = $self->domain->attributes;
+    # set default value
+    $value ||= $registered_attributes->{$name};
+    # find isa
+    my $isa = $registered_attributes->{$name}{isa} || '';
+    # pad integers
+    if ($isa eq 'Int') {
+        $value = $self->format_int($value); 
+    }
+    # stringify dates
+    elsif ($isa eq 'DateTime') {
+        $value = $self->format_datetime($value);
+    }
+    # quote it
+    return $self->quote_value($value);
+}
+
+#--------------------------------------------------------
 sub recurse_where {
     my ($self, $constraints, $op) = @_;
     $op ||= ' and ';
@@ -63,36 +128,36 @@ sub recurse_where {
             if (ref $value eq 'ARRAY') {
                 my $cmp = shift @{$value};
                 if ($cmp eq '>') {
-                    push @sets, $attribute.'>'.$self->quote_value($value->[0]);
+                    push @sets, $attribute.'>'.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq '<') {
-                    push @sets, $attribute.'<'.$self->quote_value($value->[0]);
+                    push @sets, $attribute.'<'.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq '<=') {
-                    push @sets, $attribute.'<='.$self->quote_value($value->[0]);
+                    push @sets, $attribute.'<='.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq '>=') {
-                    push @sets, $attribute.'>='.$self->quote_value($value->[0]);
+                    push @sets, $attribute.'>='.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq '!=') {
-                    push @sets, $attribute.'!='.$self->quote_value($value->[0]);
+                    push @sets, $attribute.'!='.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq 'like') {
-                    push @sets, $attribute.' like '.$self->quote_value($value->[0]);
+                    push @sets, $attribute.' like '.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq 'not like') {
-                    push @sets, $attribute.' not like '.$self->quote_value($value->[0]);
+                    push @sets, $attribute.' not like '.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq 'in') {
-                    my @values = map {$self->quote_value($_)} @{$value};
+                    my @values = map {$self->format_value($key, $_)} @{$value};
                     push @sets, $attribute.' in ('.join(', ', @values).')';
                 }
                 elsif ($cmp eq 'every') {
-                    my @values = map {$self->quote_value($_)} @{$value};
+                    my @values = map {$self->format_value($key, $_)} @{$value};
                     push @sets, 'every('.$attribute.') in ('.join(', ', @values).')';
                 }
                 elsif ($cmp eq 'between') {
-                    push @sets, $attribute.' between '.$self->quote_value($value->[0]).' and '.$self->quote_value($value->[1])
+                    push @sets, $attribute.' between '.$self->format_value($key, $value->[0]).' and '.$self->format_value($key, $value->[1])
                 }
             }
             else {
@@ -104,7 +169,7 @@ sub recurse_where {
                     push @sets, $attribute.' is not null';
                 }
                 else {
-                    push @sets, $attribute.'='.$self->quote_value($constraints->{$key});
+                    push @sets, $attribute.'='.$self->format_value($key, $value);
                 }
             }
         }
@@ -153,9 +218,10 @@ sub to_sql {
         $limit = ' limit '.$self->limit;
     }
 
-    print 'select '.$output.' from '.$self->quote_attribute($self->domain_name).$where.$sort.$limit."\n";
-    return 'select '.$output.' from '.$self->quote_attribute($self->domain_name).$where.$sort.$limit;
+    print 'select '.$output.' from '.$self->quote_attribute($self->domain->name).$where.$sort.$limit."\n";
+    return 'select '.$output.' from '.$self->quote_attribute($self->domain->name).$where.$sort.$limit;
 }
+
 
 
 no Moose;

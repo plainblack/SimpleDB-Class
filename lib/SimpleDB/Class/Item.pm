@@ -2,6 +2,7 @@ package SimpleDB::Class::Item;
 
 use Moose;
 use UUID::Tiny;
+use SimpleDB::Class::SQL;
 
 has id => (
     is          => 'ro',
@@ -36,18 +37,23 @@ sub add_attribute {
 #--------------------------------------------------------
 sub BUILD {
     my ($self) = @_;
+    my $domain = $self->domain;
 
     # add attributes
+    my $registered_attributes = $domain->attributes;
     my $attributes = $self->attributes;
+    my $select = SimpleDB::Class::SQL->new(domain=>$domain);
     foreach my $name (keys %{$attributes}) {
-        has $name => (
+        my %params = (
             is      => 'rw',
-            default => $attributes->{$name},
+            default => $select->format_value($name, $attributes->{$name}),
             lazy    => 1,
         );
+        if (exists $registered_attributes->{$name}{isa}) {
+            $params{isa} = $registered_attributes->{$name}{isa};
+        }
+        has $name => (%params);
     }
-
-    my $domain = $self->domain;
 
     # add parents
     my $parents = $domain->parents;
@@ -114,18 +120,22 @@ sub generate_uuid {
 #--------------------------------------------------------
 sub put {
     my ($self, $attributes) = @_;
+    my $registered_attributes = $self->attributes;
+
     foreach my $attribute (@{$attributes}) {
         $self->$attribute($attributes->{$attribute});
     }
     my $domain = $self->domain;
     my $params = {ItemName => $self->id, DomainName=>$domain->name};
     my $i = 0;
+    my $select = SimpleDB::Class::SQL->new(domain=>$self->domain); 
     foreach my $name (keys %{$self->attributes}) {
         my $values = $self->$name;
         unless ($values eq 'ARRAY') {
             $values = [$values];
         }
         foreach my $value (@{$values}) {
+            $value = $select->format_value($name, $value);
             $params->{'Attribute.'.$i.'.Name'} = $name;
             $params->{'Attribute.'.$i.'.Value'} = $value;
             $i++;
