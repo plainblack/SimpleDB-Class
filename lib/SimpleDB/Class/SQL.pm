@@ -47,7 +47,7 @@ sub quote_attribute {
 #--------------------------------------------------------
 sub parse_datetime {
     my ($self, $value) = @_;
-    return DateTime::Format::Strptime::strptime('%Y%m%d%H%M%S%N%z',$value) || DateTime->now;
+    return DateTime::Format::Strptime::strptime('%Y-%m-%d %H:%:M:%S %N %z',$value) || DateTime->now;
 }
 
 #--------------------------------------------------------
@@ -78,7 +78,7 @@ sub parse_value {
 #--------------------------------------------------------
 sub format_datetime {
     my ($self, $value) = @_;
-    return DateTime::Format::Strptime::strftime('%Y%m%d%H%M%S%N%z',$value);
+    return DateTime::Format::Strptime::strftime('%Y-%m-%d %H:%:M:%S %N %z',$value);
 }
 
 #--------------------------------------------------------
