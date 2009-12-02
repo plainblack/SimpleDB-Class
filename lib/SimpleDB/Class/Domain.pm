@@ -1,5 +1,19 @@
 package SimpleDB::Class::Domain;
 
+=head1 NAME
+
+
+
+=head1 DESCRIPTION
+
+
+
+=head1 METHODS
+
+The following methods are available from this class.
+
+=cut
+
 use Moose;
 use SimpleDB::Class::Item;
 use SimpleDB::Class::SQL;
@@ -127,6 +141,18 @@ sub search {
         where       => $where,
         );
 }
+
+=head1 AUTHOR
+
+JT Smith <jt_at_plainblack_com>
+
+I have to give credit where credit is due: SimpleDB::Class is heavily inspired by L<DBIx::Class> by Matt Trout (and others), and the Amazon::SimpleDB class distributed by Amazon itself (not to be confused with Amazon::SimpleDB written by Timothy Appnel).
+
+=head1 LEGAL
+
+SimpleDB::Class is Copyright 2009 Plain Black Corporation and is licensed under the same terms as Perl itself.
+
+=cut
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

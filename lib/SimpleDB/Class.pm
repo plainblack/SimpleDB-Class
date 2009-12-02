@@ -86,6 +86,24 @@ use Module::Find;
 
 #--------------------------------------------------------
 
+=head2 new ( params ) 
+
+=head3 params
+
+A hash containing the parameters to pass in to this method.
+
+=head4 access_key
+
+The access key given to you from Amazon when you sign up for the SimpleDB service at this URL: L<<a href="http://aws.amazon.com/simpledb/">http://aws.amazon.com/simpledb/</a>>
+
+=head4 secret_key
+
+The secret access key given to you from Amazon.
+
+=cut
+
+#--------------------------------------------------------
+
 =head2 access_key ( )
 
 Returns the access key passed to the constructor.
