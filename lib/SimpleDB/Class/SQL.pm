@@ -127,9 +127,9 @@ has 'output' => (
 
 #--------------------------------------------------------
 
-=head2 output ()
+=head2 domain ()
 
-Returns what was passed into the constructor for the output field.
+Returns what was passed into the constructor for the domain field.
 
 =cut
 
@@ -140,9 +140,13 @@ has 'domain' => (
 
 #--------------------------------------------------------
 
-=head2 output ()
+=head2 where ()
 
-Returns what was passed into the constructor for the output field.
+Returns what was passed into the constructor for the where field.
+
+=head2 has_where()
+
+Returns a boolean indicating whether a where clause has been set.
 
 =cut
 
@@ -153,9 +157,13 @@ has 'where' => (
 
 #--------------------------------------------------------
 
-=head2 output ()
+=head2 order_by ()
 
 Returns what was passed into the constructor for the output field.
+
+=head2 has_order_by ()
+
+Returns a boolean indicating whether an order by clause has been set.
 
 =cut
 
@@ -166,9 +174,11 @@ has 'order_by' => (
 
 #--------------------------------------------------------
 
-=head2 output ()
+=head2 limit ()
 
 Returns what was passed into the constructor for the output field.
+
+=head2 has_limit ()
 
 =cut
 
@@ -283,18 +293,55 @@ sub parse_value {
 }
 
 #--------------------------------------------------------
+
+=head2 format_datetime ( value )
+
+Returns a string formatted datetime object. Example: 2009-12-01 10:43:01 04939911 +0600. See parse_datetime, as this is the reverse of that.
+
+=head3 value
+
+A L<DateTime> object.
+
+=cut
+
 sub format_datetime {
     my ($self, $value) = @_;
     return DateTime::Format::Strptime::strftime('%Y-%m-%d %H:%:M:%S %N %z',$value);
 }
 
 #--------------------------------------------------------
+
+=head2 format_int ( value )
+
+Returns a string formatted integer. Example: 0003495839. See parse_integer as this is the reverse of that.
+
+=head3 value
+
+An integer.
+
+=cut
+
 sub format_int {
     my ($self, $value) = @_;
     return sprintf("%010d",$value+1000000000);
 }
 
 #--------------------------------------------------------
+
+=head2 format_value ( name, value )
+
+Formats an attribute as a string using one of the format_* methods in this class. See parse_value, as this is the reverse of that.
+
+=head3 name
+
+The name of the attribute to format.
+
+=head3 value
+
+The value to format.
+
+=cut
+
 sub format_value {
     my ($self, $name, $value) = @_;
     my $registered_attributes = $self->domain->attributes;
@@ -315,6 +362,21 @@ sub format_value {
 }
 
 #--------------------------------------------------------
+
+=head2 recurese_where ( constraints, [ op ] )
+
+Traverses a where() hierarchy and returns a stringified SQL version of the where clause.
+
+=head3 constraints
+
+A portion of a where hierarchy, perhaps broken off from the main for detailed analysis.
+
+=head3 op
+
+If it's a chunk broken off, -and, -or, -intersection then the operator will be passed through here. 
+
+=cut
+
 sub recurse_where {
     my ($self, $constraints, $op) = @_;
     $op ||= ' and ';
@@ -385,6 +447,13 @@ sub recurse_where {
 }
 
 #--------------------------------------------------------
+
+=head2 to_sql ( ) 
+
+Returns the entire query as a stringified SQL version.
+
+=cut
+
 sub to_sql {
     my ($self) = @_;
 
@@ -425,7 +494,6 @@ sub to_sql {
         $limit = ' limit '.$self->limit;
     }
 
-    print 'select '.$output.' from '.$self->quote_attribute($self->domain->name).$where.$sort.$limit."\n";
     return 'select '.$output.' from '.$self->quote_attribute($self->domain->name).$where.$sort.$limit;
 }
 
