@@ -238,7 +238,7 @@ A string in the format of YY-MM-DD HH:MM:SS NNNNNNN +ZZZZ where NNNNNNN represen
 
 sub parse_datetime {
     my ($self, $value) = @_;
-    return DateTime::Format::Strptime::strptime('%Y-%m-%d %H:%:M:%S %N %z',$value) || DateTime->now;
+    return DateTime::Format::Strptime::strptime('%Y-%m-%d %H:%M:%S %N %z',$value) || DateTime->now;
 }
 
 #--------------------------------------------------------
@@ -306,7 +306,7 @@ A L<DateTime> object.
 
 sub format_datetime {
     my ($self, $value) = @_;
-    return DateTime::Format::Strptime::strftime('%Y-%m-%d %H:%:M:%S %N %z',$value);
+    return DateTime::Format::Strptime::strftime('%Y-%m-%d %H:%M:%S %N %z',$value);
 }
 
 #--------------------------------------------------------
@@ -328,7 +328,7 @@ sub format_int {
 
 #--------------------------------------------------------
 
-=head2 format_value ( name, value )
+=head2 format_value ( name, value, [ skip_quotes ] )
 
 Formats an attribute as a string using one of the format_* methods in this class. See parse_value, as this is the reverse of that.
 
@@ -340,10 +340,14 @@ The name of the attribute to format.
 
 The value to format.
 
+=head3 skip_quotes
+
+A boolean indicating whether or not to skip calling the quote_value function on the whole thing.
+
 =cut
 
 sub format_value {
-    my ($self, $name, $value) = @_;
+    my ($self, $name, $value, $skip_quotes) = @_;
     my $registered_attributes = $self->domain->attributes;
     # set default value
     $value ||= $registered_attributes->{$name};
@@ -358,7 +362,7 @@ sub format_value {
         $value = $self->format_datetime($value);
     }
     # quote it
-    return $self->quote_value($value);
+    return ($skip_quotes) ? $value : $self->quote_value($value);
 }
 
 #--------------------------------------------------------

@@ -1,4 +1,4 @@
-use Test::More tests => 15;
+use Test::More tests => 16;
 use lib ('../lib', 'lib');
 
 
@@ -15,6 +15,7 @@ use Foo;
 my $foo = Foo->new(secret_key=>$secret, access_key=>$access);
 my $domain = $foo->domain('foo_domain');
 isa_ok($domain,'Foo::Domain');
+isa_ok($domain->simpledb,'SimpleDB::Class');
 ok($domain->create, 'create a domain');
 ok(grep({$_ eq 'foo_domain'} @{$foo->list_domains}), 'got created domain');
 is($domain->count, 0, 'should be 0 items');

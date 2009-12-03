@@ -185,9 +185,7 @@ sub handle_item {
     my %attributes;
     my $select = SimpleDB::Class::SQL->new(domain=>$self->domain); 
     foreach my $attribute (@{$list}) {
-
         my $value = $select->parse_value($attribute->{Name}, $attribute->{Value});
-
         # create expected hashref
         if (exists $attributes{$attribute->{Name}}) {
             if (ref $attributes{$attribute->{Name}} ne 'ARRAY') {

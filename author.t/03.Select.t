@@ -1,4 +1,4 @@
-use Test::More tests => 28;
+use Test::More tests => 30;
 use Tie::IxHash;
 use lib ('../lib', 'lib');
 use DateTime;
@@ -31,6 +31,8 @@ is($select->quote_value("this that"), q{'this that'}, "no escape");
 is($select->quote_value("this 'that'"), q{'this ''that'''}, "hq escape");
 is($select->quote_value(q{this "that"}), q{'this ""that""'}, "quote escape");
 is($select->quote_value(q{this "'that'"}), q{'this ""''that''""'}, "both escape");
+is($select->format_value('unknown', 'that'), q{'that'}, "format a string");
+is($select->format_int(45), q{1000000045}, "format a number");
 
 $select = SimpleDB::Class::SQL->new(
     domain          => $domain,
@@ -85,7 +87,7 @@ $select = SimpleDB::Class::SQL->new(
     domain          => $domain,
     where           => { 'start_date' => ['<', $dt]},
     );
-is($select->to_sql, "select * from `foo_domain` where `start_date`<'".DateTime::Format::Strptime::strftime('%Y%m%d%H%M%S%N%z',$dt)."'", "query with < where");
+is($select->to_sql, "select * from `foo_domain` where `start_date`<'".DateTime::Format::Strptime::strftime('%Y-%m-%d %H:%M:%S %N %z',$dt)."'", "query with < where");
 
 $select = SimpleDB::Class::SQL->new(
     domain          => $domain,

@@ -222,7 +222,9 @@ The classname to fetch an instance for. In the above example, Library::Books or 
 
 sub determine_domain_instance {
     my ($self, $classname) = @_;
-    return $self->domain_instances->{$classname};
+    my $domain = $self->domain_instances->{$classname};
+    $domain->simpledb($self);
+    return $domain;
 }
 
 #--------------------------------------------------------
@@ -324,9 +326,6 @@ See create_request() for details.
 
 =cut
 
-
-=cut
-
 sub send_request {
     my ($self, $action, $params) = @_;
     my $retries = 0;
@@ -376,7 +375,6 @@ L<DateTime::Format::Strptime>
 L<Moose>
 L<MooseX::ClassAttribute>
 L<Digest::SHA>
-L<XML::Simple>
 L<URI>
 L<Time::HiRes>
 L<Module::Find>

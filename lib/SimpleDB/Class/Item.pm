@@ -142,7 +142,7 @@ sub BUILD {
     foreach my $name (keys %{$attributes}) {
         my %params = (
             is      => 'rw',
-            default => $select->format_value($name, $attributes->{$name}),
+            default => $select->parse_value($name, $attributes->{$name}),
             lazy    => 1,
         );
         if (exists $registered_attributes->{$name}{isa}) {
@@ -256,9 +256,10 @@ Inserts/updates the current attributes of this Item object to the database.
 
 sub put {
     my ($self) = @_;
+    my $attributes = $self->attributes;
     my $registered_attributes = $self->attributes;
 
-    foreach my $attribute (@{$attributes}) {                                                
+    foreach my $attribute (keys %{$attributes}) {                                                
         $self->$attribute($attributes->{$attribute});
     }
     my $domain = $self->domain;
@@ -271,7 +272,7 @@ sub put {
             $values = [$values];
         }
         foreach my $value (@{$values}) {
-            $value = $select->format_value($name, $value);
+            $value = $select->format_value($name, $value, 1);
             $params->{'Attribute.'.$i.'.Name'} = $name;
             $params->{'Attribute.'.$i.'.Value'} = $value;
             $i++;
