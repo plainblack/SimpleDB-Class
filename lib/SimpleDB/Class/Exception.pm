@@ -2,15 +2,63 @@ package SimpleDB::Class::Exception;
 
 =head1 NAME
 
-
+SimpleDB::Class::Exception - Exceptions thrown by SimpleDB::Class.
 
 =head1 DESCRIPTION
 
+A submclass of L<Exception::Class> that defines expcetions to be thrown through-out L<SimpleDB::Class> ojbects.
 
+=head1 EXCEPTIONS
 
-=head1 METHODS
+The following exceptions are available from this class.
 
-The following methods are available from this class.
+=head2 SimpleDB::Class::Exception
+
+A general error.
+
+=head2 SimpleDB::Class::Exception::OverrideMe
+
+Used when creating abstract methods.
+
+=head2 SimpleDB::Class::Exception::MethodNotFound
+
+Thrown when a request object is not found.
+
+=head3 id
+
+The id of the requested object.
+
+=head2 SimpleDB::Class::Exception::Connection
+
+Thrown when exceptions occur connecting to the SimpleDB database at Amazon.
+
+=head3 status_code
+
+The HTTP status code returned.
+
+=head2 SimpleDB::Class::Exception::Response
+
+Isa SimpleDB::Class::Exception::Connection. Thrown when SimpleDB reports an error.
+
+=head3 status_code
+
+The HTTP status code returned from the request.
+
+=head3 error_code
+
+The error code returned from SimpleDB.
+
+=head3 request_id
+
+The request id as returned from SimpleDB.
+
+=head3 box_usage
+
+The storage usage in your SimpleDB.
+
+=head3 response
+
+The L<HTTP::Response> object as retrieved from the SimpleDB request.
 
 =cut
 
@@ -23,11 +71,6 @@ use Exception::Class (
     'SimpleDB::Class::Exception::OverrideMe' => {
         isa             => 'SimpleDB::Class::Exception',
         description     => 'This method should be overridden by subclasses.',
-        },
-    'SimpleDB::Class::Exception::MethodNotFound' => {
-        isa             => 'SimpleDB::Class::Exception',
-        description     => q|Called a method that doesn't exist.|,
-        fields          => 'method'
         },
     'SimpleDB::Class::Exception::ObjectNotFound' => {
         isa             => 'SimpleDB::Class::Exception',
