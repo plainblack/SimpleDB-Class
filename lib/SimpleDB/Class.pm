@@ -65,7 +65,7 @@ SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB serv
 
 SimpleDB::Class gives you a way to persist your objects in Amazon's SimpleDB service search them easily. It hides the mess of web services, sudo SQL, and XML document formats that you'd normally need to deal with to use the service, and gives you a tight clean Perl API to access it.
 
-On top of being a simple to use ORM that functions in a manner similar to L<DBIx::Class>, SimpleDB::Class has some other niceties that make dealing with SimpleDB easier. It has cascading retries, which means it automatically attepts to retry failed requests (you have to plan for failure on the net). It automatically formats dates and integers for sortability in SimpleDB. It automatically casts date fields as DateTime objects. It uses Moose for everything, which makes it easy to use Moose's introspection features or method insertion features. It automatically generates UUID based ItemNames (unique IDs) if you don't want to supply an ID yourself. It automatically deals with the fact that you might have some attributes in your domains that aren't specified in your domain classes, and creates accessors and mutators for them on the fly at retrieval time. And finally it's aware of SimpleDB's unique SQL syntax, exposes that to you with nice Perlish structures, and generates queries in the SimpleDB native dialect.
+On top of being a simple to use ORM that functions in a manner similar to L<DBIx::Class>, SimpleDB::Class has some other niceties that make dealing with SimpleDB easier. It has cascading retries, which means it automatically attepts to retry failed requests (you have to plan for failure on the net). It automatically formats dates and integers for sortability in SimpleDB. It automatically casts date fields as DateTime objects. It uses Moose for everything, which makes it easy to use Moose's introspection features or method insertion features. It automatically generates UUID based ItemNames (unique IDs) if you don't want to supply an ID yourself. It automatically deals with the fact that you might have some attributes in your domains that aren't specified in your domain classes, and creates accessors and mutators for them on the fly at retrieval time. And finally result sets automatically fetch additional items from SimpleDB if a next token is provided.
 
 =head1 METHODS
 
@@ -132,13 +132,9 @@ has 'secret_key' => (
 
 #--------------------------------------------------------
 
-=head2 domain_names ( [ list ] )
+=head2 domain_names ( )
 
 Class method. Returns a hashref of the domain names and class names registered from subclassing L<SimpleDB::Class::Domain> and calling set_name. 
-
-=head3 list
-
-Set the list of domain names registered.  Under normal use cases, this list should only be populated SimpleDB::Class' own mechanisms.
 
 =cut
 
@@ -152,10 +148,6 @@ class_has 'domain_names' => (
 =head2 domain_classes ( [ list ] )
 
 Class method. Returns a hashref of the domain class names and instances registered from subclassing L<SimpleDB::Class::Domain> and calling set_name. 
-
-=head3 list
-
-Set the list of domain classes registered.  Under normal use cases, this list should only be populated SimpleDB::Class' own mechanisms.
 
 =cut
 
@@ -397,7 +389,11 @@ This is an experimental class, and as such the API will likely change frequently
 
 - Caching.
 - Sub-searches from relationships.
+- Make puts and deletes asynchronous, since SimpleDB is eventually consistent, there's no reason to wait around for these operations to complete.
+- Creating subclasses of a domain based upon an attribute in a domain ( so you could have individuall dog breed object types all in a dogs domain for example).
+- Creating multi-domain objects ( so you can put each country's data into it's own domain, but still search all country-oriented data at once).
 - More exception handling.
+- More tests.
 - All the other stuff I forgot about or didn't know when I designed this thing.
 
 =head1 SEE ALSO
