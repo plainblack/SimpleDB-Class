@@ -1,7 +1,10 @@
-0.0100 - 2009-12-16
+0.0100 - 2009-12-17
  - Add memcached as a front-end layer to get around the eventual consistency problem.
  - Fixed the Foo problem with CPAN.
- - Fixed a few linking problems.
+ - Fixed a few linking problems in the docs.
+ - Added Crypt::SSLeay as a prereq. Forgot to it in the last release. Amazon API only works over SSL, so this is required.
+ - Added Memcached::libmemcached as a prereq.
+ - Added "Support" section to docs.
 
 0.0001 - 2009-12-02
  - Initial public release.

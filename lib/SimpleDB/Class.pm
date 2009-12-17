@@ -399,6 +399,7 @@ This package requires the following modules:
 
 L<XML::Simple>
 L<LWP>
+L<Crypt::SSLeay>
 L<DateTime>
 L<DateTime::Format::Strptime>
 L<Moose>

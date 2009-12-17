@@ -261,20 +261,36 @@ sub find {
     my $cache = $self->simpledb->cache;
     my $attributes = eval{$cache->get($id)};
     my $e;
+    print "A\n";
     if (SimpleDB::Class::Exception::ObjectNotFound->caught) {
+    print "B\n";
         my $result = $self->simpledb->send_request('GetAttributes', {
             ItemName    => $id,
             DomainName  => $self->name,
         });
+    print "C\n";
         my $item = SimpleDB::Class::ResultSet->new(domain=>$self)->handle_item($id, $result->{GetAttributesResult}{Attribute});
+    print "D\n";
         $cache->set($id, $item->to_hashref);
-    }
-    elsif (defined $attributes) {
-        return SimpleDB::Class::Item->new(id=>$id, domain=>$self, attributes=>$attributes);
+    print "F\n";
+        return $item;
     }
     elsif (my $e = SimpleDB::Class::Exception->caught) {
+    print "H\n";
         warn $e->error;
+    print "I\n";
         return $e->rethrow;
+    }
+    elsif (defined $attributes) {
+    print "J\n";
+        use Data::Dumper;
+        print Dumper($attributes)."\n";
+    print "K\n";
+        return SimpleDB::Class::Item->new(id=>$id, domain=>$self, attributes=>$attributes);
+    }
+    else {
+    print "L\n";
+        SimpleDB::Class::Exception->throw(error=>"An undefined error occured while fetching the item.");
     }
 }
 

@@ -287,7 +287,7 @@ sub to_hashref {
     my ($self) = @_;
     my %properties;
     foreach my $attribute (keys %{$self->attributes}) {                                                
-        $properties->{$attribute} = $self->$attribute;
+        $properties{$attribute} = $self->$attribute;
     }
     return \%properties;
 }
