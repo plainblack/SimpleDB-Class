@@ -14,7 +14,7 @@ unless (defined $access && defined $secret) {
 
 use Foo;
 
-my $foo = Foo->new(secret_key=>$secret, access_key=>$access);
+my $foo = Foo->new(secret_key=>$secret, access_key=>$access, cache_servers=>[{host=>'127.0.0.1', port=>11211}]);
 
 my $domain = $foo->domain('foo_domain');
 

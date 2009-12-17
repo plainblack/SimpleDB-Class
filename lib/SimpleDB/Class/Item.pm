@@ -256,12 +256,6 @@ Inserts/updates the current attributes of this Item object to the database.
 
 sub put {
     my ($self) = @_;
-    my $attributes = $self->attributes;
-    my $registered_attributes = $self->attributes;
-
-    foreach my $attribute (keys %{$attributes}) {                                                
-        $self->$attribute($attributes->{$attribute});
-    }
     my $domain = $self->domain;
     my $params = {ItemName => $self->id, DomainName=>$domain->name};
     my $i = 0;
@@ -281,6 +275,22 @@ sub put {
     $domain->simpledb->send_request('PutAttributes', $params);
 }
 
+#--------------------------------------------------------
+
+=head2 to_hashref ( )
+
+Returns a hash reference of the attributes asscoiated with this item.
+
+=cut
+
+sub to_hashref {
+    my ($self) = @_;
+    my %properties;
+    foreach my $attribute (keys %{$self->attributes}) {                                                
+        $properties->{$attribute} = $self->$attribute;
+    }
+    return \%properties;
+}
 
 =head1 AUTHOR
 

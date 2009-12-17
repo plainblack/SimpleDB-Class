@@ -1,3 +1,8 @@
-0.0001 - 2009-01-02
+0.0100 - 2009-12-16
+ - Add memcached as a front-end layer to get around the eventual consistency problem.
+ - Fixed the Foo problem with CPAN.
+ - Fixed a few linking problems.
+
+0.0001 - 2009-12-02
  - Initial public release.
 

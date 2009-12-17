@@ -1,7 +1,5 @@
 package SimpleDB::Class;
 
-our $VERSION = 0.0001;
-
 =head1 NAME
 
 SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB service.
@@ -51,7 +49,7 @@ SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB serv
  use Library;
  use DateTime;
 
- my $library = Library->new(access_key => 'xxx', secret_key => 'yyy');
+ my $library = Library->new(access_key => 'xxx', secret_key => 'yyy', cache_servers=>\@servers );
   
  my $specific_book = $library->domain('books')->find('id goes here');
 
@@ -82,6 +80,7 @@ use HTTP::Request;
 use URI::Escape qw(uri_escape_utf8);
 use Time::HiRes qw(usleep);
 use SimpleDB::Class::Exception;
+use SimpleDB::Class::Cache;
 use Module::Find;
 
 #--------------------------------------------------------
@@ -94,13 +93,43 @@ A hash containing the parameters to pass in to this method.
 
 =head4 access_key
 
-The access key given to you from Amazon when you sign up for the SimpleDB service at this URL: L<<a href="http://aws.amazon.com/simpledb/">http://aws.amazon.com/simpledb/</a>>
+The access key given to you from Amazon when you sign up for the SimpleDB service at this URL: L<http://aws.amazon.com/simpledb/>
 
 =head4 secret_key
 
 The secret access key given to you from Amazon.
 
 =cut
+
+#--------------------------------------------------------
+
+=head2 cache_servers ( )
+
+Returns the cache server array reference passed into the constructor.
+
+=cut
+
+has cache_servers => (
+    is          => 'ro',
+    required    => 1,
+);
+
+#--------------------------------------------------------
+
+=head2 cache ( )
+
+Returns a reference to the L<SimpleDB::Class::Cache> instance.
+
+=cut
+
+has cache => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        return SimpleDB::Class::Cache->new(servers=>$self->cache_servers);
+    },
+);
 
 #--------------------------------------------------------
 
@@ -380,25 +409,45 @@ L<Time::HiRes>
 L<Module::Find>
 L<UUID::Tiny>
 L<Exception::Class>
+L<Memcached::libmemcached>
 
 =head1 TODO
 
 This is an experimental class, and as such the API will likely change frequently over the next few releases. Still left to figure out:
 
-- Caching.
-- Sub-searches from relationships.
-- Make puts and deletes asynchronous, since SimpleDB is eventually consistent, there's no reason to wait around for these operations to complete.
-- Creating subclasses of a domain based upon an attribute in a domain ( so you could have individuall dog breed object types all in a dogs domain for example).
-- Creating multi-domain objects ( so you can put each country's data into it's own domain, but still search all country-oriented data at once).
-- More exception handling.
-- More tests.
-- All the other stuff I forgot about or didn't know when I designed this thing.
+=over
+
+=item - Sub-searches from relationships.
+
+=item - Make puts and deletes asynchronous, since SimpleDB is eventually consistent, there's no reason to wait around for these operations to complete.
+
+=item - Creating subclasses of a domain based upon an attribute in a domain ( so you could have individuall dog breed object types all in a dogs domain for example).
+
+=item - Creating multi-domain objects ( so you can put each country's data into it's own domain, but still search all country-oriented data at once).
+
+=item - More exception handling.
+
+=item - More tests.
+
+=item - All the other stuff I forgot about or didn't know when I designed this thing.
+
+=back
+
+=head1 SUPPORT
+
+=over
+
+=item Repository - L<http://github.com/plainblack/SimpleDB-Class>
+
+=item Bug Reports - L<http://rt.cpan.org/Public/Dist/Display.html?Name=SimpleDB-Class>
+
+=back
 
 =head1 SEE ALSO
 
 There are other packages you can use to access SimpleDB. I chose not to use them because I wanted something a bit more robust that would allow me to easily map objects to SimpleDB Domain Items. If you're looking for a low level SimpleDB accessor, then you should check out these:
 
-L<<a href="http://developer.amazonwebservices.com/connect/entry.jspa?externalID=1136">Amazon::SimpleDB</a>> - A complete and nicely functional low level library made by Amazon itself.
+Amazon::SimpleDB (L<http://developer.amazonwebservices.com/connect/entry.jspa?externalID=1136>) - A complete and nicely functional low level library made by Amazon itself.
 
 L<Amazon::SimpleDB> - A low level SimpleDB accessor that's in its infancy and may be abandoned, but appears to be pretty functional.
 

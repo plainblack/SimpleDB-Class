@@ -16,6 +16,7 @@ The following methods are available from this class.
 
 use Moose;
 use SimpleDB::Class::SQL;
+use SimpleDB::Class::Item;
 
 #--------------------------------------------------------
 

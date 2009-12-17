@@ -14,13 +14,13 @@ The following exceptions are available from this class.
 
 =head2 SimpleDB::Class::Exception
 
-A general error.
+A general error. Isa Exception::Class.
 
 =head2 SimpleDB::Class::Exception::OverrideMe
 
-Used when creating abstract methods.
+Used when creating abstract methods. Isa SimpleDB::Class::Exception.
 
-=head2 SimpleDB::Class::Exception::MethodNotFound
+=head2 SimpleDB::Class::Exception::ObjectNotFound
 
 Thrown when a request object is not found.
 
@@ -28,9 +28,17 @@ Thrown when a request object is not found.
 
 The id of the requested object.
 
+=head2 SimpleDB::Class::Exception::InvalidParam
+
+Thrown when an an object is found, but is corrupt. Isa SimpleDB::Class::Exception::ObjectNotFound.
+
+=head2 SimpleDB::Class::Exception::InvalidObject
+
+Thrown when a request object is found, but is corrupt. Isa SimpleDB::Class::Exception::ObjectNotFound.
+
 =head2 SimpleDB::Class::Exception::Connection
 
-Thrown when exceptions occur connecting to the SimpleDB database at Amazon.
+Thrown when exceptions occur connecting to the SimpleDB database at Amazon, or the memcached server. Isa SimpleDB::Class::Exception.
 
 =head3 status_code
 
@@ -39,10 +47,6 @@ The HTTP status code returned.
 =head2 SimpleDB::Class::Exception::Response
 
 Isa SimpleDB::Class::Exception::Connection. Thrown when SimpleDB reports an error.
-
-=head3 status_code
-
-The HTTP status code returned from the request.
 
 =head3 error_code
 
@@ -72,10 +76,19 @@ use Exception::Class (
         isa             => 'SimpleDB::Class::Exception',
         description     => 'This method should be overridden by subclasses.',
         },
+    'SimpleDB::Class::Exception::InvalidParam' => {
+        isa             => 'SimpleDB::Class::Exception',
+        description     => 'This method should be overridden by subclasses.',
+        fields          => ['name', 'value'],
+        },
     'SimpleDB::Class::Exception::ObjectNotFound' => {
         isa             => 'SimpleDB::Class::Exception',
         description     => "The object you were trying to retrieve does not exist.",
         fields          => ['id'],
+        },
+    'SimpleDB::Class::Exception::InvalidObject' => {
+        isa             => 'SimpleDB::Class::Exception::ObjectNotFound',
+        description     => "The object you were trying to retrieve does not exist.",
         },
     'SimpleDB::Class::Exception::Connection' => {
         isa             => 'SimpleDB::Class::Exception',

@@ -18,6 +18,7 @@ use Moose;
 use SimpleDB::Class::Item;
 use SimpleDB::Class::SQL;
 use SimpleDB::Class::ResultSet;
+use SimpleDB::Class::Exception;
 
 
 #--------------------------------------------------------
@@ -257,12 +258,24 @@ The unique identifier (called ItemName in AWS documentation) of the item to retr
 
 sub find {
     my ($self, $id) = @_;
-    my $result = $self->simpledb->send_request('GetAttributes', {
-        ItemName    => $id,
-        DomainName  => $self->name,
-    });
-    my $list = $result->{GetAttributesResult}{Attribute};
-    return SimpleDB::Class::ResultSet->new(domain=>$self)->handle_item($id, $list);
+    my $cache = $self->simpledb->cache;
+    my $attributes = eval{$cache->get($id)};
+    my $e;
+    if (SimpleDB::Class::Exception::ObjectNotFound->caught) {
+        my $result = $self->simpledb->send_request('GetAttributes', {
+            ItemName    => $id,
+            DomainName  => $self->name,
+        });
+        my $item = SimpleDB::Class::ResultSet->new(domain=>$self)->handle_item($id, $result->{GetAttributesResult}{Attribute});
+        $cache->set($id, $item->to_hashref);
+    }
+    elsif (defined $attributes) {
+        return SimpleDB::Class::Item->new(id=>$id, domain=>$self, attributes=>$attributes);
+    }
+    elsif (my $e = SimpleDB::Class::Exception->caught) {
+        warn $e->error;
+        return $e->rethrow;
+    }
 }
 
 #--------------------------------------------------------

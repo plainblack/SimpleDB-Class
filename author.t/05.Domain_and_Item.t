@@ -1,4 +1,5 @@
-use Test::More tests => 16;
+use Test::More tests => 17;
+use Test::Deep;
 use lib ('../lib', 'lib');
 
 
@@ -12,7 +13,7 @@ unless (defined $access && defined $secret) {
 
 use Foo;
 
-my $foo = Foo->new(secret_key=>$secret, access_key=>$access);
+my $foo = Foo->new(secret_key=>$secret, access_key=>$access, cache_servers=>[{host=>'127.0.0.1', port=>11211}]);
 my $domain = $foo->domain('foo_domain');
 isa_ok($domain,'Foo::Domain');
 isa_ok($domain->simpledb,'SimpleDB::Class');
@@ -24,7 +25,8 @@ ok($domain->insert({color=>'blue',size=>'small',parentId=>'two'}), 'adding item 
 is($domain->count, 2, 'should be 2 items');
 is($domain->find('largered')->size, 'large', 'find() works');
 
-$domain->insert({color=>'orange',size=>'large',parentId=>'one'});
+my $x = $domain->insert({color=>'orange',size=>'large',parentId=>'one'});
+cmp_deeply($x->to_hashref, {color=>'orange',size=>'large',parentId=>'one'}, 'to_hashref()');
 $domain->insert({color=>'green',size=>'small',parentId=>'two'});
 $domain->insert({color=>'black',size=>'huge',parentId=>'one'});
 my $foos = $domain->search({size=>'small'});
