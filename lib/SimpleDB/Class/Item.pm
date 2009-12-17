@@ -214,7 +214,9 @@ Removes this item from the database.
 sub delete {
     my ($self) = @_;
     my $domain = $self->domain;
-    $domain->simpledb->send_request('DeleteAttributes', {ItemName => $self->id, DomainName=>$domain->name});
+    my $simpledb = $domain->simpledb;
+    $simpledb->cache->delete($self->id);
+    $simpledb->send_request('DeleteAttributes', {ItemName => $self->id, DomainName=>$domain->name});
 }
 
 #--------------------------------------------------------
@@ -259,9 +261,11 @@ sub put {
     my $domain = $self->domain;
     my $params = {ItemName => $self->id, DomainName=>$domain->name};
     my $i = 0;
-    my $select = SimpleDB::Class::SQL->new(domain=>$self->domain); 
-    foreach my $name (keys %{$self->attributes}) {
-        my $values = $self->$name;
+    my $select = SimpleDB::Class::SQL->new(domain=>$domain); 
+    my $simpledb = $domain->simpledb;
+    my $attributes = $self->to_hashref;
+    foreach my $name (keys %{$attributes}) {
+        my $values = $attributes->{$name};
         unless ($values eq 'ARRAY') {
             $values = [$values];
         }
@@ -272,7 +276,8 @@ sub put {
             $i++;
         }
     }
-    $domain->simpledb->send_request('PutAttributes', $params);
+    $simpledb->cache->set($self->id, $attributes);
+    $simpledb->send_request('PutAttributes', $params);
 }
 
 #--------------------------------------------------------
