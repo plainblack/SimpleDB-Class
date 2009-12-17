@@ -259,7 +259,7 @@ The unique identifier (called ItemName in AWS documentation) of the item to retr
 sub find {
     my ($self, $id) = @_;
     my $cache = $self->simpledb->cache;
-    my $attributes = eval{$cache->get($id)};
+    my $attributes = eval{$cache->get($self->name, $id)};
     my $e;
     if (SimpleDB::Class::Exception::ObjectNotFound->caught) {
         my $result = $self->simpledb->send_request('GetAttributes', {
@@ -267,7 +267,7 @@ sub find {
             DomainName  => $self->name,
         });
         my $item = SimpleDB::Class::ResultSet->new(domain=>$self)->handle_item($id, $result->{GetAttributesResult}{Attribute});
-        $cache->set($id, $item->to_hashref);
+        $cache->set($self->name, $id, $item->to_hashref);
         return $item;
     }
     elsif (my $e = SimpleDB::Class::Exception->caught) {

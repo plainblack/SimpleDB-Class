@@ -215,7 +215,7 @@ sub delete {
     my ($self) = @_;
     my $domain = $self->domain;
     my $simpledb = $domain->simpledb;
-    $simpledb->cache->delete($self->id);
+    eval{$simpledb->cache->delete($domain->name, $self->id)};
     $simpledb->send_request('DeleteAttributes', {ItemName => $self->id, DomainName=>$domain->name});
 }
 
@@ -276,7 +276,7 @@ sub put {
             $i++;
         }
     }
-    $simpledb->cache->set($self->id, $attributes);
+    eval{$simpledb->cache->set($domain->name, $self->id, $attributes)};
     $simpledb->send_request('PutAttributes', $params);
 }
 

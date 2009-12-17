@@ -22,6 +22,7 @@ ok(grep({$_ eq 'foo_domain'} @{$foo->list_domains}), 'got created domain');
 is($domain->count, 0, 'should be 0 items');
 ok($domain->insert({color=>'red',size=>'large',parentId=>'one'}, 'largered'), 'adding item with id');
 ok($domain->insert({color=>'blue',size=>'small',parentId=>'two'}), 'adding item without id');
+sleep 1; # it's eventually consistent, so we have to wait a bit to make sure it's consistent
 is($domain->count, 2, 'should be 2 items');
 is($domain->find('largered')->size, 'large', 'find() works');
 

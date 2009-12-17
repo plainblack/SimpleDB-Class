@@ -109,31 +109,40 @@ has 'memcached' => (
 
 #-------------------------------------------------------------------
 
-=head2 fix_key ( name )
+=head2 fix_key ( domain,  id )
 
-Returns a key after it's been processed for completeness. Keys cannot have any spaces in them, and this fixes that. However, it means that "foo bar" and "foo_bar" are the same thing.
+Returns a key after it's been processed for completeness. Merges a domain name and a key name with a colon. Keys cannot have any spaces in them, and this fixes that. However, it means that "foo bar" and "foo_bar" are the same thing.
 
-=head3 name
+=head3 domain
 
-They key to process.
+They domain name to process.
+
+=head3 id
+
+They id name to process.
 
 =cut
 
 sub fix_key {
-    my ($self, $key) = @_;
+    my ($self, $domain, $id) = @_;
+    my $key = $domain.":".$id;
     $key =~ s/\s+/_/g;
     return $key;
 }
 
 #-------------------------------------------------------------------
 
-=head2 delete ( name )
+=head2 delete ( domain, id )
 
 Delete a key from the cache.
 
 Throws SimpleDB::Class::Exception::InvalidParam, SimpleDB::Class::Exception::Connection and SimpleDB::Class::Exception.
 
-=head3 name
+=head3 domain
+
+The domain name to delete from.
+
+=head3 id
 
 The key to delete.
 
@@ -141,10 +150,10 @@ The key to delete.
 
 sub delete {
     my $self = shift;
-    my ($name) = validate_pos(@_, { type => SCALAR });
-    $name = $self->fix_key($name);
+    my ($domain, $id) = validate_pos(@_, { type => SCALAR }, { type => SCALAR });
+    my $key = $self->fix_key($domain, $id);
     my $memcached = $self->memcached;
-    Memcached::libmemcached::memcached_delete($memcached, $name);
+    Memcached::libmemcached::memcached_delete($memcached, $key);
     if ($memcached->errstr eq 'SYSTEM ERROR Unknown error: 0') {
         SimpleDB::Class::Exception::Connection->throw(
             error   => "Cannot connect to memcached server."
@@ -152,8 +161,8 @@ sub delete {
     }
     elsif ($memcached->errstr eq 'NOT FOUND' ) {
        SimpleDB::Class::Exception::ObjectNotFound->throw(
-            error   => "The cache key $name has no value.",
-            id      => $name,
+            error   => "The cache key $key has no value.",
+            id      => $key,
             );
     }
     elsif ($memcached->errstr eq 'NO SERVERS DEFINED') {
@@ -165,7 +174,7 @@ sub delete {
         && $memcached->errstr ne 'PROTOCOL ERROR' # doesn't exist to delete
         ) {
         SimpleDB::Class::Exception->throw(
-            error   => "Couldn't delete $name from cache because ".$memcached->errstr
+            error   => "Couldn't delete $key from cache because ".$memcached->errstr
             );
     }
 }
@@ -203,13 +212,17 @@ sub flush {
 
 #-------------------------------------------------------------------
 
-=head2 get ( name )
+=head2 get ( domain, id )
 
 Retrieves a key value from the cache.
 
 Throws SimpleDB::Class::Exception::InvalidObject, SimpleDB::Class::Exception::InvalidParam, SimpleDB::Class::Exception::ObjectNotFound, SimpleDB::Class::Exception::Connection and SimpleDB::Class::Exception.
 
-=head3 name
+=head3 domain
+
+The domain name to retrieve from.
+
+=head3 id
 
 The key to retrieve.
 
@@ -217,10 +230,10 @@ The key to retrieve.
 
 sub get {
     my $self = shift;
-    my ($name) = validate_pos(@_, { type => SCALAR });
-    $name = $self->fix_key($name);
+    my ($domain, $id) = validate_pos(@_, { type => SCALAR }, { type => SCALAR });
+    my $key = $self->fix_key($domain, $id);
     my $memcached = $self->memcached;
-    my $content = Memcached::libmemcached::memcached_get($memcached, $name);
+    my $content = Memcached::libmemcached::memcached_get($memcached, $key);
     $content = Storable::thaw($content);
     if ($memcached->errstr eq 'SUCCESS') {
         if (ref $content) {
@@ -228,14 +241,14 @@ sub get {
         }
         else {
             SimpleDB::Class::Exception::InvalidObject->throw(
-                error   => "Couldn't thaw value for $name."
+                error   => "Couldn't thaw value for $key."
                 );
         }
     }
     elsif ($memcached->errstr eq 'NOT FOUND' ) {
         SimpleDB::Class::Exception::ObjectNotFound->throw(
-            error   => "The cache key $name has no value.",
-            id      => $name,
+            error   => "The cache key $key has no value.",
+            id      => $key,
             );
     }
     elsif ($memcached->errstr eq 'NO SERVERS DEFINED') {
@@ -249,28 +262,28 @@ sub get {
             );
     }
     SimpleDB::Class::Exception->throw(
-        error   => "Couldn't get $name from cache because ".$memcached->errstr
+        error   => "Couldn't get $key from cache because ".$memcached->errstr
     );
 }
 
 #-------------------------------------------------------------------
 
-=head2 mget ( names )
+=head2 mget ( keys )
 
 Retrieves multiple values from cache at once, which is much faster than retrieving one at a time. Returns an array reference containing the values in the order they were requested.
 
 Throws SimpleDB::Class::Exception::InvalidParam, SimpleDB::Class::Exception::Connection and SimpleDB::Class::Exception.
 
-=head3 names
+=head3 keys
 
-An array reference of keys to retrieve.
+An array reference of domain names and ids to retrieve.
 
 =cut
 
 sub mget {
     my $self = shift;
     my ($names) = validate_pos(@_, { type => ARRAYREF });
-    my @keys = map { $self->fix_key($_) } @{ $names };
+    my @keys = map { $self->fix_key(@{$_}) } @{ $names };
     my %result;
     my $memcached = $self->memcached;
     $memcached->mget_into_hashref(\@keys, \%result);
@@ -302,13 +315,17 @@ sub mget {
 
 #-------------------------------------------------------------------
 
-=head2 set ( name, value [, ttl] )
+=head2 set ( domain, id, value [, ttl] )
 
 Sets a key value to the cache.
 
 Throws SimpleDB::Class::Exception::InvalidParam, SimpleDB::Class::Exception::Connection, and SimpleDB::Class::Exception.
 
-=head3 name
+=head3 domain
+
+The name of the domain to set the info into.
+
+=head3 id
 
 The name of the key to set.
 
@@ -318,18 +335,18 @@ A hash reference to store.
 
 =head3 ttl
 
-A time in seconds for the cache to exist. When you override default it to 60 seconds.
+A time in seconds for the cache to exist. Default is 3600 seconds (1 hour).
 
 =cut
 
 sub set {
     my $self = shift;
-    my ($name, $value, $ttl) = validate_pos(@_, { type => SCALAR }, { type => HASHREF }, { type => SCALAR | UNDEF, optional => 1 });
-    $name = $self->fix_key($name);
+    my ($domain, $id, $value, $ttl) = validate_pos(@_, { type => SCALAR }, { type => SCALAR }, { type => HASHREF }, { type => SCALAR | UNDEF, optional => 1 });
+    my $key = $self->fix_key($domain, $id);
     $ttl ||= 60;
     my $frozenValue = Storable::nfreeze($value); 
     my $memcached = $self->memcached;
-    Memcached::libmemcached::memcached_set($memcached, $name, $frozenValue, $ttl);
+    Memcached::libmemcached::memcached_set($memcached, $key, $frozenValue, $ttl);
     if ($memcached->errstr eq 'SUCCESS') {
         return $value;
     }
@@ -344,7 +361,7 @@ sub set {
             );
     }
     SimpleDB::Class::Exception->throw(
-        error   => "Couldn't set $name to cache because ".$memcached->errstr
+        error   => "Couldn't set $key to cache because ".$memcached->errstr
         );
     return $value;
 }
