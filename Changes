@@ -1,6 +1,11 @@
 0.0200 - 2009-12-18
- - Added async calls to SimpleDB.
+ - Split HTTP functionality out into it's own module.
+ - Added async calls to HTTP requests for use with multitaskers like POE and Coro.
  - Fixed a bug where retries on failed connections were infinite.
+ - Added link to PB.
+ - Removed author from POD except in main docs.
+ - Added prereqs AnyEvent::HTTP and Net::SSLeay.
+ - Removed prereqs Crypt::SSLeay, Time::HiRes, LWP::UserAgent, and HTTP::Request.
 
 0.0100 - 2009-12-17
  - Add memcached as a front-end layer to get around the eventual consistency problem.
