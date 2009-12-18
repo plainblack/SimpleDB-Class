@@ -18,10 +18,7 @@ use Moose;
 use Digest::SHA qw(hmac_sha256_base64);
 use XML::Simple;
 use AnyEvent::HTTP;
-use LWP::UserAgent;
-use HTTP::Request;
 use URI::Escape qw(uri_escape_utf8);
-use Time::HiRes qw(usleep);
 use SimpleDB::Class::Exception;
 
 #--------------------------------------------------------
@@ -74,7 +71,7 @@ has 'secret_key' => (
 
 =head2 construct_request ( action, [ params ] )
 
-Returns a L<HTTP::Request> object ready to make a request to SimpleDB. Normally this is only called by send_request(), but if you want to debug a SimpleDB interaction, then having access to this method is critical.
+Returns a string that contains the HTTP post data ready to make a request to SimpleDB. Normally this is only called by send_request(), but if you want to debug a SimpleDB interaction, then having access to this method is critical.
 
 =head3 action
 
@@ -110,12 +107,7 @@ sub construct_request {
     $signature = hmac_sha256_base64($signature, $self->secret_key) . '=';
     $post_data .= '&Signature=' . uri_escape_utf8($signature, $encoding_pattern);
 
-    # construct the request
-    my $request = HTTP::Request->new('POST', 'https://sdb.amazonaws.com/');
-    $request->content_type("application/x-www-form-urlencoded; charset=utf-8");
-    $request->content($post_data);
-
-    return $request;
+    return $post_data;
 }
 
 #--------------------------------------------------------
@@ -136,37 +128,49 @@ See create_request() for details.
 
 sub send_request {
     my ($self, $action, $params) = @_;
-    my $retries = 0;
+    my $retries = 1;
     while (1) { # loop til we get a response or throw an exception
-        my $ua = LWP::UserAgent->new;
-        my $response = $ua->request($self->construct_request($action, $params));
-        my $content = eval { XML::Simple::XMLin($response->content)};
+        my $response_returned = AnyEvent->condvar;
+        http_post('https://sdb.amazonaws.com/',
+            $self->construct_request($action, $params),
+            timeout     => 30,
+            headers     => {
+                'Content-Type'  => 'application/x-www-form-urlencoded; charset=utf-8',
+            },
+            sub { $response_returned->send(@_); } 
+        );
+        my ($body, $headers) = $response_returned->recv;
+        my $content = eval {XML::Simple::XMLin($body)};
         if ($@) {
             SimpleDB::Class::Exception::Response->throw(
-                error       => 'Response was garbage.', 
-                status_code => $response->code,
-                response    => $response,
+                error       => 'Response was garbage. Are you sure you installed Net::SSLeay?', 
+                status_code => $headers->{Status},
+                response    => [$body, $headers],
             );
         }
-        elsif ($response->is_success) {
+        elsif ($headers->{Status} >= 200 && $headers->{Status} < 300) {
             return $content;
         }
-        elsif ($response->code == 500 || $response->code == 503) {
+        elsif ($headers->{Status} >= 500 && $headers->{Status} < 600) {
             if ($retries < 5) {
-                usleep((4 ** $retries) * 100000);
+                my $sleeper = AnyEvent->condvar;
+                AnyEvent->timer( after => ((4 ** $retries) / 10), cb => sub { $sleeper->send });
+                $retries++;
+                $sleeper->recv;
             }
             else {
-                SimpleDB::Class::Exception::Connection->throw(error=>'Exceeded maximum retries.', status_code=>$response->code);
+                warn $headers->{Reason};
+                SimpleDB::Class::Exception::Connection->throw(error=>'Exceeded maximum retries.', status_code=>$headers->{Status});
             }
         }
         else {
             SimpleDB::Class::Exception::Response->throw(
                 error       => $content->{Errors}{Error}{Message},
-                status_code => $response->code,
+                status_code => $headers->{Status},
                 error_code  => $content->{Errors}{Error}{Code},
                 box_usage   => $content->{Errors}{Error}{BoxUsage},
                 request_id  => $content->{RequestID},
-                response    => $response,
+                response    => [$body, $headers],
             );
         }
     }

@@ -1,5 +1,6 @@
 0.0200 - 2009-12-18
  - Added async calls to SimpleDB.
+ - Fixed a bug where retries on failed connections were infinite.
 
 0.0100 - 2009-12-17
  - Add memcached as a front-end layer to get around the eventual consistency problem.

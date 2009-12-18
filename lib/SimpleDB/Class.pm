@@ -442,15 +442,14 @@ sub send_request {
 This package requires the following modules:
 
 L<XML::Simple>
-L<LWP>
-L<Crypt::SSLeay>
+L<AnyEvent::HTTP>
+L<Net::SSLeay>
 L<DateTime>
 L<DateTime::Format::Strptime>
 L<Moose>
 L<MooseX::ClassAttribute>
 L<Digest::SHA>
 L<URI>
-L<Time::HiRes>
 L<Module::Find>
 L<UUID::Tiny>
 L<Exception::Class>
