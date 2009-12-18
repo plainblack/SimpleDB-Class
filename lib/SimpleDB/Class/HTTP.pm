@@ -6,7 +6,16 @@ SimpleDB::Class::HTTP - The network interface to the SimpleDB service.
 
 =head1 SYNOPSIS
 
+ use SimpleDB::Class::HTTP;
+
+ my $http = SimpleDB::Class::HTTP->new(secret_key=>'abc', access_key=>'123');
+ my $hashref = $http->send_request('CreateDomain', {DomainName => 'my_new_domain'});
+
 =head1 DESCRIPTION
+
+This class will let you quickly and easily inteface with AWS SimpleDB. It throws exceptions from L<SimpleDB::Class::Exception>, but other than that doesn't rely on any of the other modules in the SimpleDB::Class system, which means it's very light weight. Although we haven't run any benchmarks, it should outperform any of the other Perl modules that exist today. 
+
+It's also got built-in L<AnyEvent> support, so you can use it in your L<Coro>, L<POE>, or other event frameworks and it will handle its requests and timers in a non-blocking fashion.
 
 =head1 METHODS
 
@@ -116,6 +125,8 @@ sub construct_request {
 
 Creates a request, and then sends it to SimpleDB. The response is returned as a hash reference of the raw XML document returned by SimpleDB. Automatically attempts 5 cascading retries on connection failure.
 
+Throws SimpleDB::Class::Exception::Response and SimpleDB::Class::Exception::Connection.
+
 =head3 action
 
 See create_request() for details.
@@ -129,10 +140,14 @@ See create_request() for details.
 sub send_request {
     my ($self, $action, $params) = @_;
     my $retries = 1;
-    while (1) { # loop til we get a response or throw an exception
+    my $request = $self->construct_request($action, $params);
+    # loop til we get a response or throw an exception
+    while (1) { 
+
+        # make the request
         my $response_returned = AnyEvent->condvar;
         http_post('https://sdb.amazonaws.com/',
-            $self->construct_request($action, $params),
+            $request,
             timeout     => 30,
             headers     => {
                 'Content-Type'  => 'application/x-www-form-urlencoded; charset=utf-8',
@@ -140,18 +155,9 @@ sub send_request {
             sub { $response_returned->send(@_); } 
         );
         my ($body, $headers) = $response_returned->recv;
-        my $content = eval {XML::Simple::XMLin($body)};
-        if ($@) {
-            SimpleDB::Class::Exception::Response->throw(
-                error       => 'Response was garbage. Are you sure you installed Net::SSLeay?', 
-                status_code => $headers->{Status},
-                response    => [$body, $headers],
-            );
-        }
-        elsif ($headers->{Status} >= 200 && $headers->{Status} < 300) {
-            return $content;
-        }
-        elsif ($headers->{Status} >= 500 && $headers->{Status} < 600) {
+
+        # got a possibly recoverable error, let's retry
+        if ($headers->{Status} >= 500 && $headers->{Status} < 600) {
             if ($retries < 5) {
                 my $sleeper = AnyEvent->condvar;
                 AnyEvent->timer( after => ((4 ** $retries) / 10), cb => sub { $sleeper->send });
@@ -163,28 +169,66 @@ sub send_request {
                 SimpleDB::Class::Exception::Connection->throw(error=>'Exceeded maximum retries.', status_code=>$headers->{Status});
             }
         }
+
+        # not a retry
         else {
-            SimpleDB::Class::Exception::Response->throw(
-                error       => $content->{Errors}{Error}{Message},
-                status_code => $headers->{Status},
-                error_code  => $content->{Errors}{Error}{Code},
-                box_usage   => $content->{Errors}{Error}{BoxUsage},
-                request_id  => $content->{RequestID},
-                response    => [$body, $headers],
-            );
+            return $self->handle_response($body, $headers);
         }
     }
 }
 
-=head1 AUTHOR
+#--------------------------------------------------------
 
-JT Smith <jt_at_plainblack_com>
+=head2 handle_response ( body, headers ) 
 
-I have to give credit where credit is due: SimpleDB::Class is heavily inspired by L<DBIx::Class> by Matt Trout (and others), and the Amazon::SimpleDB class distributed by Amazon itself (not to be confused with Amazon::SimpleDB written by Timothy Appnel).
+Returns a hashref containing the response from SimpleDB.
+
+Throws SimpleDB::Class::Exception::Response.
+
+=head3 body
+
+The XML returned by SimpleDB.
+
+=head3 headers
+
+The HTTP headers.
+
+=cut
+
+sub handle_response {
+    my ($self, $body, $headers) = @_;
+    my $content = eval {XML::Simple::XMLin($body)};
+
+    # choked reconstituing the XML, probably because it wasn't XML
+    if ($@) {
+        SimpleDB::Class::Exception::Response->throw(
+            error       => 'Response was garbage. Are you sure you installed Net::SSLeay?', 
+            status_code => $headers->{Status},
+            response    => [$body, $headers],
+        );
+    }
+
+    # got a valid response
+    elsif ($headers->{Status} >= 200 && $headers->{Status} < 300) {
+        return $content;
+    }
+
+    # SimpleDB gave us an error message
+    else {
+        SimpleDB::Class::Exception::Response->throw(
+            error       => $content->{Errors}{Error}{Message},
+            status_code => $headers->{Status},
+            error_code  => $content->{Errors}{Error}{Code},
+            box_usage   => $content->{Errors}{Error}{BoxUsage},
+            request_id  => $content->{RequestID},
+            response    => [$body, $headers],
+        );
+    }
+}
 
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 

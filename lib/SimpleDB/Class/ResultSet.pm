@@ -34,7 +34,7 @@ Required. A L<SimpleDB::Class::Domain> object.
 
 =head4 result
 
-A result as returned from the send_request() method from L<SimpleDB::Class>. Either this or a where is required.
+A result as returned from the send_request() method from L<SimpleDB::Class::HTTP>. Either this or a where is required.
 
 =head4 where
 
@@ -123,7 +123,7 @@ sub fetch_result {
         $params{NextToken} = $self->result->{SelectResult}{NextToken};
     }
 
-    my $result = $self->domain->simpledb->send_request('Select', \%params);
+    my $result = $self->domain->simpledb->http->send_request('Select', \%params);
     $self->result($result);
     return $result;
 }
@@ -221,15 +221,9 @@ sub handle_item {
     return SimpleDB::Class::Item->new(domain=>$domain, name=>$id, attributes=>$attributes);
 }
 
-=head1 AUTHOR
-
-JT Smith <jt_at_plainblack_com>
-
-I have to give credit where credit is due: SimpleDB::Class is heavily inspired by L<DBIx::Class> by Matt Trout (and others), and the Amazon::SimpleDB class distributed by Amazon itself (not to be confused with Amazon::SimpleDB written by Timothy Appnel).
-
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 

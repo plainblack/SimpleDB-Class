@@ -397,16 +397,9 @@ When you request a cache key that doesn't exist on any configured memcached serv
 
 When an object can't be thawed from cache due to corruption of some sort.
 
-
-=head1 AUTHOR
-
-JT Smith <jt_at_plainblack_com>
-
-I have to give credit where credit is due: SimpleDB::Class is heavily inspired by L<DBIx::Class> by Matt Trout (and others), and the Amazon::SimpleDB class distributed by Amazon itself (not to be confused with Amazon::SimpleDB written by Timothy Appnel).
-
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 

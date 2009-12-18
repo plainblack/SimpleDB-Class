@@ -216,7 +216,7 @@ sub delete {
     my $domain = $self->domain;
     my $simpledb = $domain->simpledb;
     eval{$simpledb->cache->delete($domain->name, $self->id)};
-    $simpledb->send_request('DeleteAttributes', {ItemName => $self->id, DomainName=>$domain->name});
+    $simpledb->http->send_request('DeleteAttributes', {ItemName => $self->id, DomainName=>$domain->name});
 }
 
 #--------------------------------------------------------
@@ -235,7 +235,7 @@ sub delete_attribute {
     my $domain = $self->domain;
     my $simpledb = $domain->simpledb;
     eval{$simpledb->cache->set($domain->name, $self->id, $attributes)};
-    $simpledb->send_request('DeleteAttributes', { ItemName => $self->id, DomainName => $domain->name, 'Attribute.0.Name' => $name } );
+    $simpledb->http->send_request('DeleteAttributes', { ItemName => $self->id, DomainName => $domain->name, 'Attribute.0.Name' => $name } );
 }
 
 #--------------------------------------------------------
@@ -279,7 +279,7 @@ sub put {
         }
     }
     eval{$simpledb->cache->set($domain->name, $self->id, $attributes)};
-    $simpledb->send_request('PutAttributes', $params);
+    $simpledb->http->send_request('PutAttributes', $params);
 }
 
 #--------------------------------------------------------
@@ -299,15 +299,9 @@ sub to_hashref {
     return \%properties;
 }
 
-=head1 AUTHOR
-
-JT Smith <jt_at_plainblack_com>
-
-I have to give credit where credit is due: SimpleDB::Class is heavily inspired by L<DBIx::Class> by Matt Trout (and others), and the Amazon::SimpleDB class distributed by Amazon itself (not to be confused with Amazon::SimpleDB written by Timothy Appnel).
-
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 

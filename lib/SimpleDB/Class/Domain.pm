@@ -226,7 +226,7 @@ Creates this domain in the SimpleDB.
 
 sub create {
     my ($self) = @_;
-    $self->simpledb->send_request('CreateDomain', {
+    $self->simpledb->http->send_request('CreateDomain', {
         DomainName => $self->name,
     });
 }
@@ -241,7 +241,7 @@ Deletes this domain from the SimpleDB.
 
 sub delete {
     my ($self) = @_;
-    $self->simpledb->send_request('DeleteDomain', {
+    $self->simpledb->http->send_request('DeleteDomain', {
         DomainName => $self->name,
     });
 }
@@ -264,7 +264,7 @@ sub find {
     my $attributes = eval{$cache->get($self->name, $id)};
     my $e;
     if (SimpleDB::Class::Exception::ObjectNotFound->caught) {
-        my $result = $self->simpledb->send_request('GetAttributes', {
+        my $result = $self->simpledb->http->send_request('GetAttributes', {
             ItemName    => $id,
             DomainName  => $self->name,
         });
@@ -332,7 +332,7 @@ sub count {
         where       => $clauses,
         output      => 'count(*)',
     );
-    my $result = $self->simpledb->send_request('Select', {
+    my $result = $self->simpledb->http->send_request('Select', {
         SelectExpression    => $select->to_sql,
     });
     return $result->{SelectResult}{Item}{Attribute}{Value};
@@ -360,15 +360,9 @@ sub search {
         );
 }
 
-=head1 AUTHOR
-
-JT Smith <jt_at_plainblack_com>
-
-I have to give credit where credit is due: SimpleDB::Class is heavily inspired by L<DBIx::Class> by Matt Trout (and others), and the Amazon::SimpleDB class distributed by Amazon itself (not to be confused with Amazon::SimpleDB written by Timothy Appnel).
-
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 
