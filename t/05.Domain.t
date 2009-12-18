@@ -8,7 +8,7 @@ use_ok( 'SimpleDB::Class::Domain' );
 my %attributes = ('foo'=>{}, 'bar'=>{}, 'xxx'=>{});
 
 SimpleDB::Class::Domain->set_name('test');
-my $db = SimpleDB::Class->new(access_key=>'access', secret_key=>'secret');
+my $db = SimpleDB::Class->new(access_key=>'access', secret_key=>'secret', cache_servers=>[{host=>'127.0.0.1',port=>11211}]);
 
 my $domain = $db->domain('SimpleDB::Class::Domain');
 is($domain->name, 'test', 'domain name assignment works');

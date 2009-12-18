@@ -15,6 +15,6 @@ cmp_deeply($cache->servers, $servers, 'can get the servers list back');
 
 isa_ok($cache->memcached, 'Memcached::libmemcached');
 
-is($cache->fix_key('test this'), 'test_this', 'keys with spaces are fixed');
+is($cache->fix_key('domain','test this'), 'domain:test_this', 'keys with spaces are fixed');
 
 # everything else requires a connection

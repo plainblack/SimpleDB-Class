@@ -165,7 +165,27 @@ sub next {
     $self->iterator($iterator);
 
     # make the item object
-    return $self->handle_item($item->{Name}, $item->{Attribute});
+    my $domain = $self->domain;
+    my $cache = $domain->simpledb->cache;
+    ## fetch from cache even though we've already pulled it back from the db, because the one in cache
+    ## might be more up to date than the one from the DB
+    my $attributes = eval{$cache->get($domain->name, $item->{Name})}; 
+    my $e;
+    if ($e = SimpleDB::Class::Exception::ObjectNotFound->caught) {
+        my $itemobj = $self->handle_item($item->{Name}, $item->{Attribute});
+        eval{$cache->set($domain->name, $item->{Name}, $itemobj->to_hashref)};
+        return $itemobj;
+    }
+    elsif ($e = SimpleDB::Class::Exception->caught) {
+        warn $e->error;
+        return $e->rethrow;
+    }
+    elsif (defined $attributes) {
+        return SimpleDB::Class::Item->new(id=>$item->{Name}, domain=>$domain, attributes=>$attributes);
+    }
+    else {
+        SimpleDB::Class::Exception->throw(error=>"An undefined error occured while fetching the item from cache.");
+    }
 }
 
 #--------------------------------------------------------
@@ -179,26 +199,26 @@ Converts the attributes section of an item in a result set into a L<SimpleDB::Cl
 sub handle_item {
     my ($self, $id, $list) = @_;
     my $domain = $self->domain;
+    my $attributes = {};
     my $registered_attributes = $domain->attributes;
     unless (ref $list eq 'ARRAY') {
         $list = [$list];
     }
-    my %attributes;
     my $select = SimpleDB::Class::SQL->new(domain=>$self->domain); 
     foreach my $attribute (@{$list}) {
         my $value = $select->parse_value($attribute->{Name}, $attribute->{Value});
         # create expected hashref
-        if (exists $attributes{$attribute->{Name}}) {
-            if (ref $attributes{$attribute->{Name}} ne 'ARRAY') {
-                $attributes{$attribute->{Name}} = [$attributes{$attribute->{Name}}];
+        if (exists $attributes->{$attribute->{Name}}) {
+            if (ref $attributes->{$attribute->{Name}} ne 'ARRAY') {
+                $attributes->{$attribute->{Name}} = [$attributes->{$attribute->{Name}}];
             }
-            push @{$attributes{$attribute->{Name}}}, $value;
+            push @{$attributes->{$attribute->{Name}}}, $value;
         }
         else {
-            $attributes{$attribute->{Name}} = $value;
+            $attributes->{$attribute->{Name}} = $value;
         }
     }
-    return SimpleDB::Class::Item->new(domain=>$domain, name=>$id, attributes=>\%attributes);
+    return SimpleDB::Class::Item->new(domain=>$domain, name=>$id, attributes=>$attributes);
 }
 
 =head1 AUTHOR

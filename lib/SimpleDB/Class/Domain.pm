@@ -160,6 +160,8 @@ sub belongs_to {
 
 Class method. Sets up a 1:N relationship between this class and a child class.
 
+WARNING: With this method you need to be aware that SimpleDB is eventually consistent. See L<SimpleDB::Class/"Eventual Consistency"> for details.
+
 =head3 method
 
 The name of the method in this class you wish to use to access the relationship with the child class.
@@ -315,6 +317,8 @@ sub insert {
 
 Returns an integer indicating how many items are in this domain.
 
+WARNING: With this method you need to be aware that SimpleDB is eventually consistent. See L<SimpleDB::Class/"Eventual Consistency"> for details.
+
 =head3 where
 
 A where clause as defined in L<SimpleDB::Class::SQL> if you want to count only a certain number of items in the domain.
@@ -338,7 +342,9 @@ sub count {
 
 =head2 search ( where )
 
-Returns a L<SimpleDB::Class::ResultSet> object.
+Returns a L<SimpleDB::Class::ResultSet> object. 
+
+WARNING: With this method you need to be aware that SimpleDB is eventually consistent. See L<SimpleDB::Class/"Eventual Consistency"> for details.
 
 =head3 where
 

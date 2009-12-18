@@ -233,7 +233,9 @@ sub delete_attribute {
     delete $attributes->{$name};
     $self->attributes($attributes);
     my $domain = $self->domain;
-    $domain->simpledb->send_request('DeleteAttributes', { ItemName => $self->id, DomainName => $domain->name, 'Attribute.0.Name' => $name } );
+    my $simpledb = $domain->simpledb;
+    eval{$simpledb->cache->set($domain->name, $self->id, $attributes)};
+    $simpledb->send_request('DeleteAttributes', { ItemName => $self->id, DomainName => $domain->name, 'Attribute.0.Name' => $name } );
 }
 
 #--------------------------------------------------------

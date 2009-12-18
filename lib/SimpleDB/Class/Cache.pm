@@ -7,21 +7,20 @@ Package SimpleDB::Class::Cache
 
 =head1 DESCRIPTION
 
-An API that allows you to cache items to a memcached server.
+An API that allows you to cache item data to a memcached server. Technically I should be storing the item itself, but since the item has a reference to the domain, and the domain has a reference to the simpledb object, it could cause all sorts of problems, so it's just safer to store just the item's data.
 
 =head1 SYNOPSIS
 
  use SimpleDB::Class::Cache;
  
- my $cache = SimpleDB::Class::Cache->new();
+ my $cache = SimpleDB::Class::Cache->new(servers=>[{host=>'127.0.0.1', port=>11211}]);
 
- $cache->set($name, $value);
- $cache->set(\@nameSegments, $value);
+ $cache->set($domain->name, $id, $value);
 
- my $value = $cache->get($name);
- my ($val1, $val2) = @{$cache->mget([$name1, $name2])};
+ my $value = $cache->get($domain->name, $id);
+ my ($val1, $val2) = @{$cache->mget([[$domain->name, $id1], [$domain->name, $id2]])};
 
- $cache->delete($name);
+ $cache->delete($domain->name, $id);
 
  $cache->flush;
 

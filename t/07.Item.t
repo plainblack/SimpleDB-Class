@@ -8,7 +8,7 @@ use_ok( 'SimpleDB::Class::Item' );
 my %attributes = ('foo' => 'xxx');
 
 
-my $db = SimpleDB::Class->new(secret_key=>'secretxx', access_key=>'accessyy');
+my $db = SimpleDB::Class->new(secret_key=>'secretxx', access_key=>'accessyy', cache_servers=>[{host=>'127.0.0.1',port=>11211}]);
 my $domain = SimpleDB::Class::Domain->new(name=>'test', simpledb=>$db);
 my $item = SimpleDB::Class::Item->new(domain=>$domain, attributes=>\%attributes);
 
