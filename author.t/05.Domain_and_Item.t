@@ -14,16 +14,23 @@ unless (defined $access && defined $secret) {
 use Foo;
 
 my $foo = Foo->new(secret_key=>$secret, access_key=>$access, cache_servers=>[{host=>'127.0.0.1', port=>11211}]);
+$foo->cache->flush;
 my $domain = $foo->domain('foo_domain');
 isa_ok($domain,'Foo::Domain');
 isa_ok($domain->simpledb,'SimpleDB::Class');
-ok($domain->create, 'create a domain');
-ok(grep({$_ eq 'foo_domain'} @{$foo->list_domains}), 'got created domain');
-is($domain->count, 0, 'should be 0 items');
+
+my $parent = $foo->domain('foo_parent');
+ok($parent->create, 'create a domain');
+ok(grep({$_ eq 'foo_parent'} @{$foo->list_domains}), 'got created domain');
+is($parent->count, 0, 'should be 0 items');
+$parent->insert({title=>'One'},'one');
+$parent->insert({title=>'Two'},'two');
+sleep 1; # it's eventually consistent, so we have to wait a bit to make sure it's consistent
+is($parent->count, 2, 'should be 2 items');
+
+$domain->create;
 ok($domain->insert({color=>'red',size=>'large',parentId=>'one'}, 'largered'), 'adding item with id');
 ok($domain->insert({color=>'blue',size=>'small',parentId=>'two'}), 'adding item without id');
-sleep 1; # it's eventually consistent, so we have to wait a bit to make sure it's consistent
-is($domain->count, 2, 'should be 2 items');
 is($domain->find('largered')->size, 'large', 'find() works');
 
 my $x = $domain->insert({color=>'orange',size=>'large',parentId=>'one'});
@@ -35,10 +42,6 @@ isa_ok($foos, 'SimpleDB::Class::ResultSet');
 isa_ok($foos->next, 'SimpleDB::Class::Item');
 is($foos->next->size, 'small', 'fetched an item from the result set');
 
-my $parent = $foo->domain('foo_parent');
-$parent->create;
-$parent->insert({title=>'One'},'one');
-$parent->insert({title=>'Two'},'two');
 my $child = $foo->domain('foo_child');
 $child->create;
 $child->insert({domainId=>'largered'});

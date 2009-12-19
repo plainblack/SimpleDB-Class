@@ -3,7 +3,7 @@ package SimpleDB::Class::Cache;
 
 =head1 NAME
 
-Package SimpleDB::Class::Cache
+SimpleDB::Class::Cache - Memcached interface for SimpleDB.
 
 =head1 DESCRIPTION
 

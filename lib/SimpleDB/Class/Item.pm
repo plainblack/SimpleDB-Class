@@ -134,6 +134,7 @@ Generates the relationship methods and attribute methods on object construction.
 sub BUILD {
     my ($self) = @_;
     my $domain = $self->domain;
+    my $simpledb = $domain->simpledb;
 
     # add attributes
     my $registered_attributes = $domain->attributes;
@@ -157,10 +158,7 @@ sub BUILD {
         my ($classname, $attribute) = @{$parents->{$parent}};
         has $parent => (
             is      => 'ro',
-            default => sub {
-                my $self = shift;
-                return $domain->simpledb->determine_domain_instance($classname)->find($self->$attribute);
-                },
+            default => sub { return $simpledb->determine_domain_instance($classname)->find($self->$attribute); },
             lazy    => 1,
         );
     }
@@ -171,10 +169,18 @@ sub BUILD {
         my ($classname, $attribute) = @{$children->{$child}};
         has $child => (
             is      => 'ro',
-            default => sub {
-                my $self = shift;
-                return $domain->simpledb->determine_domain_instance($classname)->search({$attribute => $self->$attribute});
-                },
+            default => sub { return $simpledb->determine_domain_instance($classname)->search({$attribute => $self->id}); },
+            lazy    => 1,
+        );
+    }
+
+    # add indexed children
+    my $indexed_children = $domain->indexed_children;
+    foreach my $child (keys %{$indexed_children}) {
+        my ($classname, $attribute) = @{$indexed_children->{$child}};
+        has $child => (
+            is      => 'ro',
+            default => sub { return SimpleDB::Class::IndexedResultSet->new(domain=>$simpledb->determine_domain_instance($classname), ids=>$self->$attribute); },
             lazy    => 1,
         );
     }
