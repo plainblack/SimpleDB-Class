@@ -377,11 +377,7 @@ Sub-searches from relationships.
 
 =item *
 
-Make puts and deletes asynchronous, since SimpleDB is eventually consistent, there's no reason to wait around for these operations to complete.
-
-=item *
-
-Creating subclasses of a domain based upon an attribute in a domain ( so you could have individuall dog breed object types all in a dogs domain for example).
+Creating subclasses of a domain based upon an attribute in a domain ( so you could have individual dog breed object types all in a dogs domain for example).
 
 =item *
 

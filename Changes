@@ -1,5 +1,7 @@
 0.0201 - 2009-12-25
  - Some documentation fixes.
+ - Cleaned up relationship code.
+ - Attempted in-item indexed relationships, but abandoned it due to race conditions. Check out commits a3c651797a5d3924be129300bf08500e0e3c6f2d and 04709b014317d9c15dc265323cde71a647e072d9 to investigate in the future.
 
 0.0200 - 2009-12-18
  - Split HTTP functionality out into it's own module.

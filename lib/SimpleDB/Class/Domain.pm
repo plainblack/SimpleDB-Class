@@ -128,20 +128,6 @@ has children => (
 
 #--------------------------------------------------------
 
-=head2 indexed_children ( )
-
-Returns the hashref of children set by the has_index() method.
-
-=cut
-
-has indexed_children => (
-    is      => 'rw',
-    isa     => 'HashRef',
-    default => sub{{}},
-);
-
-#--------------------------------------------------------
-
 =head2 belongs_to ( method, class, attribute )
 
 Class method. Adds a 1:N relationship between another class and this one.
@@ -196,34 +182,6 @@ sub has_many {
     my $children = $self->children;
     $children->{$name} = [$classname, $attribute];
     $self->children($children);
-};
-
-#--------------------------------------------------------
-
-=head2 has_index ( method, class, attribute )
-
-Class method. Sets up a 1:N relationship between this class and a child class. Works exactly like has_many, but instead of searching through another domain to find relationships, the relationships are contained within the item in this domain.
-
-=head3 method
-
-The name of the method in this class you wish to use to access the relationship with the child class.
-
-=head3 class
-
-The class name of the class you're creating the child relationship with.
-
-=head3 attribute
-
-The attribute in this class that contains the index of ids of the child relationships.
-
-=cut
-
-sub has_index {
-    my ($class, $name, $classname, $attribute) = @_;
-    my $self = SimpleDB::Class->determine_domain_instance($class);
-    my $children = $self->indexed_children;
-    $children->{$name} = [$classname, $attribute];
-    $self->indexed_children($children);
 };
 
 #--------------------------------------------------------

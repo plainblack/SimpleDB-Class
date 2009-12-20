@@ -173,17 +173,6 @@ sub BUILD {
             lazy    => 1,
         );
     }
-
-    # add indexed children
-    my $indexed_children = $domain->indexed_children;
-    foreach my $child (keys %{$indexed_children}) {
-        my ($classname, $attribute) = @{$indexed_children->{$child}};
-        has $child => (
-            is      => 'ro',
-            default => sub { return SimpleDB::Class::IndexedResultSet->new(domain=>$simpledb->determine_domain_instance($classname), ids=>$self->$attribute); },
-            lazy    => 1,
-        );
-    }
 }
 
 #--------------------------------------------------------
