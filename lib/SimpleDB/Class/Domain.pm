@@ -15,7 +15,6 @@ The following methods are available from this class.
 =cut
 
 use Moose;
-use SimpleDB::Class::Item;
 use SimpleDB::Class::SQL;
 use SimpleDB::Class::ResultSet;
 use SimpleDB::Class::Exception;
@@ -44,32 +43,32 @@ Required. The SimpleDB domain name associated with this class.
 
 #--------------------------------------------------------
 
-=head2 set_name ( name )
+=head2 item_class ( )
 
-Class method. Used to set the SimpleDB domain name associated with a sublcass.
-
-=head3 name
-
-The domain name to set.
+Returns the L<SimpleDB::Class::Item> subclass name passed into the constructor.
 
 =cut
 
-sub set_name {
-    my ($class, $name) = @_;
-    SimpleDB::Class->_add_domain($name => $class->new(name=>$name));
-}
+has item_class => (
+    is          => 'ro',
+    required    => 1,
+    trigger     => sub {
+        my ($self, $item, $old) = @_;
+        $self->name($item->domain_name);
+    },
+);
 
 #--------------------------------------------------------
 
 =head2 name ( )
 
-Returns the name set in the constructor.
+Returns the name determined automatically by the item_class passed into the constructor.
 
 =cut
 
-has 'name' => (
-    is          => 'ro',
-    required    => 1,
+has name => (
+    is          => 'rw',
+    default     => undef,
 );
 
 #--------------------------------------------------------
@@ -80,141 +79,10 @@ Returns the L<SimpleDB::Class> object set in the constructor.
 
 =cut
 
-has 'simpledb' => (
-    is          => 'rw',
+has simpledb => (
+    is          => 'ro',
+    required    => 1,
 );
-
-#--------------------------------------------------------
-
-=head2 attributes ( )
-
-Returns the hashref of attributes set by the add_attributes() method.
-
-=cut
-
-has 'attributes' => (
-    is      => 'rw',
-    isa     => 'HashRef',
-    default => sub{{}},
-);
-
-#--------------------------------------------------------
-
-=head2 parents ( )
-
-Returns the hashref of parents set by the belongs_to() method.
-
-=cut
-
-has 'parents' => (
-    is      => 'rw',
-    isa     => 'HashRef',
-    default => sub{{}},
-);
-
-#--------------------------------------------------------
-
-=head2 children ( )
-
-Returns the hashref of children set by the has_many() method.
-
-=cut
-
-has children => (
-    is      => 'rw',
-    isa     => 'HashRef',
-    default => sub{{}},
-);
-
-#--------------------------------------------------------
-
-=head2 belongs_to ( method, class, attribute )
-
-Class method. Adds a 1:N relationship between another class and this one.
-
-=head3 method
-
-The method name to create to represent this relationship in this class.
-
-=head3 class
-
-The class name of the parent class you're relating this class to.
-
-=head3 attribute
-
-The attribute in this class' attribute list that represents the id of the parent class.
-
-=cut
-
-sub belongs_to {
-    my ($class, $name, $classname, $attribute) = @_;
-    my $self = SimpleDB::Class->determine_domain_instance($class);
-    my $parents = $self->parents;
-    $parents->{$name} = [$classname, $attribute];
-    $self->parents($parents);
-};
-
-#--------------------------------------------------------
-
-=head2 has_many ( method, class, attribute )
-
-Class method. Sets up a 1:N relationship between this class and a child class.
-
-WARNING: With this method you need to be aware that SimpleDB is eventually consistent. See L<SimpleDB::Class/"Eventual Consistency"> for details.
-
-=head3 method
-
-The name of the method in this class you wish to use to access the relationship with the child class.
-
-=head3 class
-
-The class name of the class you're creating the child relationship with.
-
-=head3 attribute
-
-The attribute in the child class that represents this class' id.
-
-=cut
-
-sub has_many {
-    my ($class, $name, $classname, $attribute) = @_;
-    my $self = SimpleDB::Class->determine_domain_instance($class);
-    my $children = $self->children;
-    $children->{$name} = [$classname, $attribute];
-    $self->children($children);
-};
-
-#--------------------------------------------------------
-
-=head2 add_attributes ( list )
-
-Class method. Adds more attributes to this class.
-
-=head3 list
-
-A hashref that holds a list of attributes and their properties (a hashref itself). Example: title => { isa => 'Str', default => 'Untitled' }
-
-=head4 attribute
-
-The attribute name is key in the hashref.
-
-=head4 isa
-
-The type of data represented by this attribute. Defaults to 'Str' if left out. Options are 'Str', 'Int', and 'DateTime'.
-
-=head4 default
-
-The default value for this attribute. This should be specified even if it is 'None' or 'Undefined' or 'Null', because actuall null queries are slow in SimpleDB.
-
-=cut
-
-sub add_attributes {
-    my ($class, %new_attributes) = @_;
-    my $self = SimpleDB::Class->determine_domain_instance($class);
-    my %attributes = (%{$self->attributes}, %new_attributes);
-    $self->attributes(\%attributes);
-    return \%attributes;
-}
 
 #--------------------------------------------------------
 
@@ -268,7 +136,9 @@ sub find {
             ItemName    => $id,
             DomainName  => $self->name,
         });
-        my $item = SimpleDB::Class::ResultSet->new(domain=>$self)->handle_item($id, $result->{GetAttributesResult}{Attribute});
+        my $item = SimpleDB::Class::ResultSet
+            ->new(simpledb=>$self->simpledb, item_class=>$self->item_class)
+            ->handle_item($id, $result->{GetAttributesResult}{Attribute});
         $cache->set($self->name, $id, $item->to_hashref);
         return $item;
     }
@@ -277,7 +147,8 @@ sub find {
         return $e->rethrow;
     }
     elsif (defined $attributes) {
-        return SimpleDB::Class::Item->new(id=>$id, domain=>$self, attributes=>$attributes);
+        return $self->item_class->new(id=>$id, simpledb=>$self->simpledb)
+            ->update($attributes);
     }
     else {
         SimpleDB::Class::Exception->throw(error=>"An undefined error occured while fetching the item.");
@@ -302,13 +173,13 @@ Optionally specify a unqiue id for this item.
 
 sub insert {
     my ($self, $attributes, $id) = @_;
-    my %params = (domain=>$self, attributes=>$attributes);
+    my %params = (simpledb=>$self->simpledb);
     if (defined $id && $id ne '') {
         $params{id} = $id;
     }
-    my $item = SimpleDB::Class::Item->new(\%params);
-    $item->put;
-    return $item;
+    return $self->item_class->new(\%params)
+        ->update($attributes)
+        ->put;
 }
 
 #--------------------------------------------------------
@@ -328,7 +199,7 @@ A where clause as defined in L<SimpleDB::Class::SQL> if you want to count only a
 sub count {
     my ($self, $clauses) = @_;
     my $select = SimpleDB::Class::SQL->new(
-        domain      => $self,
+        item_class  => $self->item_class,
         where       => $clauses,
         output      => 'count(*)',
     );
@@ -355,7 +226,8 @@ A where clause as defined by L<SimpleDB::Class::SQL>.
 sub search {
     my ($self, $where) = @_;
     return SimpleDB::Class::ResultSet->new(
-        domain      => $self,
+        simpledb    => $self->simpledb,
+        item_class  => $self->item_class,
         where       => $where,
         );
 }

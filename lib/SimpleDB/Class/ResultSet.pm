@@ -16,7 +16,6 @@ The following methods are available from this class.
 
 use Moose;
 use SimpleDB::Class::SQL;
-use SimpleDB::Class::Item;
 
 #--------------------------------------------------------
 
@@ -28,9 +27,13 @@ Constructor.
 
 A hash.
 
-=head4 domain
+=head4 simpledb
 
-Required. A L<SimpleDB::Class::Domain> object.
+Required. A L<SimpleDB::Class> object.
+
+=head4 item_class
+
+Required. A L<SimpleDB::Class::Item> subclass name.
 
 =head4 result
 
@@ -57,13 +60,26 @@ has where => (
 
 #--------------------------------------------------------
 
-=head2 domain ( )
+=head2 simpledb ( )
 
-Returns the domain passed into the constructor.
+Returns the simpledb passed into the constructor.
 
 =cut
 
-has domain => (
+has simpledb => (
+    is          => 'ro',
+    required    => 1,
+);
+
+#--------------------------------------------------------
+
+=head2 item_class ( )
+
+Returns the item_class passed into the constructor.
+
+=cut
+
+has item_class => (
     is          => 'ro',
     required    => 1,
 );
@@ -113,7 +129,7 @@ Fetches a result, based on a where clause passed into a constructor, and then ma
 sub fetch_result {
     my ($self) = @_;
     my $select = SimpleDB::Class::SQL->new(
-        domain      => $self->domain,
+        item_class  => $self->item_class,
         where       => $self->where,
     );
     my %params = (SelectExpression => $select->to_sql);
@@ -123,7 +139,7 @@ sub fetch_result {
         $params{NextToken} = $self->result->{SelectResult}{NextToken};
     }
 
-    my $result = $self->domain->simpledb->http->send_request('Select', \%params);
+    my $result = $self->simpledb->http->send_request('Select', \%params);
     $self->result($result);
     return $result;
 }
@@ -138,7 +154,6 @@ Returns the next result in the result set. Also fetches th next partial result s
 
 sub next {
     my ($self) = @_;
-
     # get the current results
     my $result = ($self->has_result) ? $self->result : $self->fetch_result;
     my $items = (ref $result->{SelectResult}{Item} eq 'ARRAY') ? $result->{SelectResult}{Item} : [$result->{SelectResult}{Item}];
@@ -165,15 +180,14 @@ sub next {
     $self->iterator($iterator);
 
     # make the item object
-    my $domain = $self->domain;
-    my $cache = $domain->simpledb->cache;
+    my $cache = $self->simpledb->cache;
     ## fetch from cache even though we've already pulled it back from the db, because the one in cache
     ## might be more up to date than the one from the DB
-    my $attributes = eval{$cache->get($domain->name, $item->{Name})}; 
+    my $attributes = eval{$cache->get($self->item_class->domain_name, $item->{Name})}; 
     my $e;
     if ($e = SimpleDB::Class::Exception::ObjectNotFound->caught) {
         my $itemobj = $self->handle_item($item->{Name}, $item->{Attribute});
-        eval{$cache->set($domain->name, $item->{Name}, $itemobj->to_hashref)};
+        eval{$cache->set($self->item_class->domain_name, $item->{Name}, $itemobj->to_hashref)};
         return $itemobj;
     }
     elsif ($e = SimpleDB::Class::Exception->caught) {
@@ -181,7 +195,7 @@ sub next {
         return $e->rethrow;
     }
     elsif (defined $attributes) {
-        return SimpleDB::Class::Item->new(id=>$item->{Name}, domain=>$domain, attributes=>$attributes);
+        return $self->item_class->new(id=>$item->{Name}, simpledb=>$self->simpledb)->update($attributes);
     }
     else {
         SimpleDB::Class::Exception->throw(error=>"An undefined error occured while fetching the item from cache.");
@@ -198,27 +212,39 @@ Converts the attributes section of an item in a result set into a L<SimpleDB::Cl
 
 sub handle_item {
     my ($self, $id, $list) = @_;
-    my $domain = $self->domain;
-    my $attributes = {};
-    my $registered_attributes = $domain->attributes;
     unless (ref $list eq 'ARRAY') {
         $list = [$list];
     }
-    my $select = SimpleDB::Class::SQL->new(domain=>$self->domain); 
+    my $item = $self->item_class->new(simpledb=>$self->simpledb, name=>$id);
+    my $attributes = {};
+    my $registered_attributes = $self->item_class->attributes;
+    my $select = SimpleDB::Class::SQL->new(item_class=>$self->item_class); 
+    my %added = ();
     foreach my $attribute (@{$list}) {
-        my $value = $select->parse_value($attribute->{Name}, $attribute->{Value});
+        my $name = $attribute->{Name};
+
+        # add unknown attributes
+        if (!exists $registered_attributes->{$name} && ! exists $added{$name}) {
+           $item->add_attributes($name => { isa => 'Str' }); 
+           $added{$name} = 1;
+        }
+
+        # get value
+        my $value = $select->parse_value($name, $attribute->{Value});
+
         # create expected hashref
-        if (exists $attributes->{$attribute->{Name}}) {
-            if (ref $attributes->{$attribute->{Name}} ne 'ARRAY') {
-                $attributes->{$attribute->{Name}} = [$attributes->{$attribute->{Name}}];
+        if (exists $attributes->{$name}) {
+            if (ref $attributes->{$name} ne 'ARRAY') {
+                $attributes->{$name} = [$attributes->{$name}];
             }
-            push @{$attributes->{$attribute->{Name}}}, $value;
+            push @{$attributes->{$name}}, $value;
         }
         else {
-            $attributes->{$attribute->{Name}} = $value;
+            $attributes->{$name} = $value;
         }
+
     }
-    return SimpleDB::Class::Item->new(domain=>$domain, name=>$id, attributes=>$attributes);
+    return $item->update($attributes);
 }
 
 =head1 LEGAL

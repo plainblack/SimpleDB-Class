@@ -1,9 +1,9 @@
 package Foo::Domain;
 
 use Moose;
-extends 'SimpleDB::Class::Domain';
+extends 'SimpleDB::Class::Item';
 
-__PACKAGE__->set_name('foo_domain');
+__PACKAGE__->set_domain_name('foo_domain');
 __PACKAGE__->add_attributes(
     color       =>{isa=>'Str'}, 
     size        =>{isa=>'Str'}, 
@@ -13,6 +13,7 @@ __PACKAGE__->add_attributes(
     );
 __PACKAGE__->has_many('children', 'Foo::Child', 'domainId');
 __PACKAGE__->belongs_to('parent', 'Foo::Parent', 'parentId');
+
 
 1;
 

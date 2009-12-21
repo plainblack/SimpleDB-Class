@@ -1,4 +1,9 @@
-0.0201 - 2009-12-25
+0.0300 - 2009-12-20
+ - Rethought the whole subclassing approach. Now subclassing the result rather than the domain, and everything is much cooler, and is much closer to DBIx::Class. Check out the docs for API changes.
+ - While rewriting discovered that all relationship and attribute methods were global (all classes in the schema got them), which is a huge bug. This problemhas been eliminated in this version as well.
+ - Added Sub::Name to the prereqs.
+
+0.0201 - 2009-12-19
  - Some documentation fixes.
  - Cleaned up relationship code.
  - Attempted in-item indexed relationships, but abandoned it due to race conditions. Check out commits a3c651797a5d3924be129300bf08500e0e3c6f2d and 04709b014317d9c15dc265323cde71a647e072d9 to investigate in the future.

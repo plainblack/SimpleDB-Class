@@ -17,6 +17,170 @@ The following methods are available from this class.
 use Moose;
 use UUID::Tiny;
 use SimpleDB::Class::SQL;
+use Sub::Name ();
+
+#--------------------------------------------------------
+sub _install_sub {
+    my ($name, $sub) = @_;
+    no strict 'refs';
+    *{$name} = Sub::Name::subname($name, $sub);
+}
+
+#--------------------------------------------------------
+
+=head2 set_domain_name ( name )
+
+Class method. Used to set the SimpleDB domain name associated with a sublcass.
+
+=head3 name
+
+The domain name to set.
+
+=head2 domain_name ( )
+
+After set_domain_name() has been called, there will be a domain_name method, that will return the value of the domain name.
+
+=cut
+
+sub set_domain_name {
+    my ($class, $name) = @_;
+    # inject domain_name sub
+    _install_sub($class.'::domain_name', sub { return $name });
+    # register the name and class with the schema
+    my $names = SimpleDB::Class->domain_names;
+    $names->{$name} = $class; 
+    SimpleDB::Class->domain_names($names);
+}
+
+#--------------------------------------------------------
+
+=head2 add_attributes ( list )
+
+Class method. Adds more attributes to this class. B<NOTE:> This will add a method to your class which can be used as an accessor/mutator. Therefore make sure to avoid method name conflicts with this class.
+
+=head3 list
+
+A hashref that holds a list of attributes and their properties (a hashref itself). Example: title => { isa => 'Str', default => 'Untitled' }
+
+=head4 attribute
+
+The attribute name is key in the hashref.
+
+=head4 isa
+
+The type of data represented by this attribute. Defaults to 'Str' if left out. Options are 'Str', 'Int', and 'DateTime'.
+
+=head4 default
+
+The default value for this attribute. This should be specified even if it is 'None' or 'Undefined' or 'Null', because actuall null queries are slow in SimpleDB.
+
+=cut
+
+sub add_attributes {
+    my ($class, %attributes) = @_;
+    foreach my $name (keys %attributes) {
+        my $accessor = sub { 
+                my ($self, $val) = @_; 
+                my $attr = $self->attribute_data;
+                if (defined $val) {
+                    $attr->{$name} = $val;
+                    $self->attribute_data($attr);
+                }
+                return $attr->{$name};
+        };
+        _install_sub($class.'::'.$name, $accessor);
+    }
+    my %new = (%{$class->attributes}, %attributes);
+    _install_sub($class.'::attributes', sub { return \%new; });
+}
+
+has attribute_data => (
+    is      => 'rw',
+    default => sub {{}},
+);
+
+#--------------------------------------------------------
+
+=head2 has_many ( method, class, attribute )
+
+Class method. Sets up a 1:N relationship between this class and a child class.
+
+WARNING: With this method you need to be aware that SimpleDB is eventually consistent. See L<SimpleDB::Class/"Eventual Consistency"> for details.
+
+=head3 method
+
+The name of the method in this class you wish to use to access the relationship with the child class.
+
+=head3 class
+
+The class name of the class you're creating the child relationship with.
+
+=head3 attribute
+
+The attribute in the child class that represents this class' id.
+
+=cut
+
+sub has_many {
+    my ($class, $name, $classname, $attribute) = @_;
+    _install_sub($class.'::'.$name, sub { my $self = shift; return $self->simpledb->domain($classname)->search({$attribute => $self->id}); });
+}
+
+#--------------------------------------------------------
+
+=head2 belongs_to ( method, class, attribute )
+
+Class method. Adds a 1:N relationship between another class and this one.
+
+=head3 method
+
+The method name to create to represent this relationship in this class.
+
+=head3 class
+
+The class name of the parent class you're relating this class to.
+
+=head3 attribute
+
+The attribute in this class' attribute list that represents the id of the parent class.
+
+=cut
+
+sub belongs_to {
+    my ($class, $name, $classname, $attribute) = @_;
+    _install_sub($class.'::'.$name, sub { my $self = shift; return $self->simpledb->domain($classname)->find($self->$attribute); });
+};
+
+#--------------------------------------------------------
+
+=head2 attributes ( )
+
+Class method. Returns the hashref of attributes set by the add_attributes() method.
+
+=cut
+sub attributes { return {} };
+
+
+#--------------------------------------------------------
+
+=head2 update ( attributes ) 
+
+Update a bunch of attributes all at once. Returns a reference to L<$self> so it can be chained into other methods.
+
+=head3 attributes
+
+A hash reference containing attribute names and values.
+
+=cut
+
+sub update {
+    my ($self, $attributes) = @_;
+    foreach my $attribute (keys %{$attributes}) {
+        $self->$attribute($attributes->{$attribute});
+    }
+    return $self;
+}
+
 
 #--------------------------------------------------------
 
@@ -32,9 +196,9 @@ A hash.
 
 The unique identifier (ItemName) of the item represented by this class. If you don't pass this in, an item ID will be generated for you automatically.
 
-=head4 domain
+=head4 simpledb 
 
-Required. A L<SimpleDB::Class::Domain> object.
+Required. A L<SimpleDB::Class> object.
 
 =head4 attributes
 
@@ -52,6 +216,19 @@ If specified, sets the current value of the attribute. Note, that this doesn't u
 
 #--------------------------------------------------------
 
+=head2 simpledb ( )
+
+Returns the simpledb passed into the constructor.
+
+=cut
+
+has simpledb => (
+    is          => 'ro',
+    required    => 1,
+);
+
+#--------------------------------------------------------
+
 =head2 id ( )
 
 Returns the unique id of this item.
@@ -63,117 +240,6 @@ has id => (
     builder     => 'generate_uuid',
     lazy        => 1,
 );
-
-#--------------------------------------------------------
-
-=head2 domain ( )
-
-Returns the domain passed into the constructor.
-
-=cut
-
-has domain => (
-    is          => 'ro',
-    required    => 1,
-);
-
-#--------------------------------------------------------
-
-=head2 attributes ( )
-
-Returns the attributes passed into the constructor.
-
-=cut
-
-has attributes => (
-    is          => 'rw',
-    isa         => 'HashRef',
-    required    => 1,
-);
-
-#--------------------------------------------------------
-
-=head2 add_attribute ( name, [ default, type ] )
-
-Adds an accessor / mutator for a new attribute. Allows you to create a wide range of items with a wide range of attributes that weren't conceived when you wrote the domain object.
-
-=head3 name
-
-The attribute name.
-
-=head3 default
-
-The default value. Defaults to undef, which is bad because null searches are slow.
-
-=head3 type
-
-Valid types are 'Str', 'Int', and 'DateTime'. Defaults to 'Str'.
-
-=cut
-
-sub add_attribute {
-    my ($self, $name, $value) = @_;
-    my $attributes = $self->attributes;
-    $attributes->{$name} = $value;
-    $self->attributes($attributes);
-    has $name => (
-        is      => 'rw',
-        default => $value,
-        lazy    => 1,
-    );
-}
-
-#--------------------------------------------------------
-
-=head2 BUILD ( )
-
-Generates the relationship methods and attribute methods on object construction. See L<Moose> for details.
-
-=cut
-
-sub BUILD {
-    my ($self) = @_;
-    my $domain = $self->domain;
-    my $simpledb = $domain->simpledb;
-
-    # add attributes
-    my $registered_attributes = $domain->attributes;
-    my $attributes = $self->attributes;
-    my $select = SimpleDB::Class::SQL->new(domain=>$domain);
-    foreach my $name (keys %{$attributes}) {
-        my %params = (
-            is      => 'rw',
-            default => $select->parse_value($name, $attributes->{$name}),
-            lazy    => 1,
-        );
-        if (exists $registered_attributes->{$name}{isa}) {
-            $params{isa} = $registered_attributes->{$name}{isa};
-        }
-        has $name => (%params);
-    }
-
-    # add parents
-    my $parents = $domain->parents;
-    foreach my $parent (keys %{$parents}) {
-        my ($classname, $attribute) = @{$parents->{$parent}};
-        has $parent => (
-            is      => 'ro',
-            default => sub { return $simpledb->determine_domain_instance($classname)->find($self->$attribute); },
-            lazy    => 1,
-        );
-    }
-
-    # add children
-    my $children = $domain->children;
-    foreach my $child (keys %{$children}) {
-        my ($classname, $attribute) = @{$children->{$child}};
-        has $child => (
-            is      => 'ro',
-            default => sub { return $simpledb->determine_domain_instance($classname)->search({$attribute => $self->id}); },
-            lazy    => 1,
-        );
-    }
-}
 
 #--------------------------------------------------------
 
@@ -193,7 +259,7 @@ sub copy {
     foreach my $name (keys %{$self->attributes}) {
         $properties{$name} = $self->$name;
     }
-    my $new = $self->new(domain => $self->domain, attributes => \%properties, id=>$id);
+    my $new = $self->new(simpledb => $self->simpledb, attributes => \%properties, id=>$id);
     $new->put;
     return $new;
 }
@@ -208,10 +274,9 @@ Removes this item from the database.
 
 sub delete {
     my ($self) = @_;
-    my $domain = $self->domain;
-    my $simpledb = $domain->simpledb;
-    eval{$simpledb->cache->delete($domain->name, $self->id)};
-    $simpledb->http->send_request('DeleteAttributes', {ItemName => $self->id, DomainName=>$domain->name});
+    my $simpledb = $self->simpledb;
+    eval{$simpledb->cache->delete($self->domain_name, $self->id)};
+    $simpledb->http->send_request('DeleteAttributes', {ItemName => $self->id, DomainName=>$self->domain_name});
 }
 
 #--------------------------------------------------------
@@ -227,10 +292,9 @@ sub delete_attribute {
     my $attributes = $self->attributes;
     delete $attributes->{$name};
     $self->attributes($attributes);
-    my $domain = $self->domain;
-    my $simpledb = $domain->simpledb;
-    eval{$simpledb->cache->set($domain->name, $self->id, $attributes)};
-    $simpledb->http->send_request('DeleteAttributes', { ItemName => $self->id, DomainName => $domain->name, 'Attribute.0.Name' => $name } );
+    my $simpledb = $self->simpledb;
+    eval{$simpledb->cache->set($self->domain_name, $self->id, $attributes)};
+    $simpledb->http->send_request('DeleteAttributes', { ItemName => $self->id, DomainName => $self->domain_name, 'Attribute.0.Name' => $name } );
 }
 
 #--------------------------------------------------------
@@ -249,20 +313,19 @@ sub generate_uuid {
 
 =head2 put ( )
 
-Inserts/updates the current attributes of this Item object to the database.
+Inserts/updates the current attributes of this Item object to the database.  Returns a reference to L<$self> so it can be chained into other methods.
 
 =cut
 
 sub put {
     my ($self) = @_;
-    my $domain = $self->domain;
-    my $params = {ItemName => $self->id, DomainName=>$domain->name};
+    my $params = {ItemName => $self->id, DomainName=>$self->domain_name};
     my $i = 0;
-    my $select = SimpleDB::Class::SQL->new(domain=>$domain); 
-    my $simpledb = $domain->simpledb;
+    my $select = SimpleDB::Class::SQL->new(item_class=>ref($self)); 
     my $attributes = $self->to_hashref;
     foreach my $name (keys %{$attributes}) {
         my $values = $attributes->{$name};
+        next unless defined $values; # don't store null values
         unless ($values eq 'ARRAY') {
             $values = [$values];
         }
@@ -273,8 +336,10 @@ sub put {
             $i++;
         }
     }
-    eval{$simpledb->cache->set($domain->name, $self->id, $attributes)};
+    my $simpledb = $self->simpledb;
+    eval{$simpledb->cache->set($self->domain_name, $self->id, $attributes)};
     $simpledb->http->send_request('PutAttributes', $params);
+    return $self;
 }
 
 #--------------------------------------------------------
