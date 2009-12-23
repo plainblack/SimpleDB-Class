@@ -1,4 +1,4 @@
-use Test::More tests => 18;
+use Test::More tests => 20;
 use Test::Deep;
 use lib ('../lib', 'lib');
 
@@ -40,7 +40,10 @@ $domain->insert({color=>'black',size=>'huge',parentId=>'one'});
 my $foos = $domain->search({size=>'small'});
 isa_ok($foos, 'SimpleDB::Class::ResultSet');
 isa_ok($foos->next, 'Foo::Domain');
-is($foos->next->size, 'small', 'fetched an item from the result set');
+my $a_domain = $foos->next;
+ok($a_domain->can('size'), 'attribute methods created');
+ok(!$a_domain->can('title'), 'other class attribute methods not created');
+is($a_domain->size, 'small', 'fetched an item from the result set');
 
 my $child = $foo->domain('foo_child');
 $child->create;

@@ -252,9 +252,11 @@ sub parse_datetime {
 
 Parses an integer formatted string and returns an actual integer.
 
+B<Warning:> SimpleDB::Class only supports 15 digit positive integers and 9 digit negative integers.
+
 =head3 string
 
-A string that is composed of an integer + 1000000000 and then padded to have preceding zeros so that it's always 10 characters long.
+A string that is composed of an integer + 1000000000 and then padded to have preceding zeros so that it's always 15 characters long.
 
 =cut
 
@@ -320,7 +322,9 @@ sub format_datetime {
 
 =head2 format_int ( value )
 
-Returns a string formatted integer. Example: 0003495839. See parse_integer as this is the reverse of that.
+Returns a string formatted integer. Example: 000000003495839. See parse_integer as this is the reverse of that. 
+
+B<Warning:> SimpleDB::Class only supports 15 digit positive integers and 9 digit negative integers.
 
 =head3 value
 
@@ -330,7 +334,8 @@ An integer.
 
 sub format_int {
     my ($self, $value) = @_;
-    return sprintf("%010d",$value+1000000000);
+    $value ||= 0; # init
+    return sprintf("%015d",$value+1000000000);
 }
 
 #--------------------------------------------------------

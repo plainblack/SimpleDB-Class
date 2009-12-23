@@ -160,7 +160,7 @@ sub send_request {
         if ($headers->{Status} >= 500 && $headers->{Status} < 600) {
             if ($retries < 5) {
                 my $sleeper = AnyEvent->condvar;
-                AnyEvent->timer( after => ((4 ** $retries) / 10), cb => sub { $sleeper->send });
+                my $w = AnyEvent->timer( after => ((4 ** $retries) / 10), cb => sub { $sleeper->send });
                 $retries++;
                 $sleeper->recv;
             }
