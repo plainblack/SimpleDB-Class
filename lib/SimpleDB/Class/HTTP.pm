@@ -202,7 +202,7 @@ sub handle_response {
     # choked reconstituing the XML, probably because it wasn't XML
     if ($@) {
         SimpleDB::Class::Exception::Response->throw(
-            error       => 'Response was garbage. Are you sure you installed Net::SSLeay?', 
+            error       => 'Response was garbage. Confirm Net::SSLeay, XML::Parser, and XML::Simple installations.', 
             status_code => $headers->{Status},
             response    => [$body, $headers],
         );
