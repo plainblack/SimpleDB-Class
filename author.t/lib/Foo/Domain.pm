@@ -9,6 +9,7 @@ __PACKAGE__->add_attributes(
     size        =>{isa=>'Str'}, 
     parentId    =>{isa=>'Str'}, 
     quantity    =>{isa=>'Int'},
+    properties  =>{isa=>'HashRef'},
     start_date  =>{isa=>'DateTime'},
     );
 __PACKAGE__->has_many('children', 'Foo::Child', 'domainId');

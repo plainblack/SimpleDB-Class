@@ -32,9 +32,9 @@ ok($domain->insert({color=>'red',size=>'large',parentId=>'one'}, 'largered'), 'a
 ok($domain->insert({color=>'blue',size=>'small',parentId=>'two'}), 'adding item without id');
 is($domain->find('largered')->size, 'large', 'find() works');
 
-my $x = $domain->insert({color=>'orange',size=>'large',parentId=>'one'});
+my $x = $domain->insert({color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'}});
 isa_ok($x, 'Foo::Domain');
-cmp_deeply($x->to_hashref, {color=>'orange',size=>'large',parentId=>'one', start_date=>undef, quantity=>undef}, 'to_hashref()');
+cmp_deeply($x->to_hashref, {properties=>{this=>'that'}, color=>'orange',size=>'large',parentId=>'one', start_date=>undef, quantity=>undef}, 'to_hashref()');
 $domain->insert({color=>'green',size=>'small',parentId=>'two'});
 $domain->insert({color=>'black',size=>'huge',parentId=>'one'});
 my $foos = $domain->search({size=>'small'});

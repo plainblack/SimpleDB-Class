@@ -68,7 +68,7 @@ The attribute name is key in the hashref.
 
 =head4 isa
 
-The type of data represented by this attribute. Defaults to 'Str' if left out. Options are 'Str', 'Int', and 'DateTime'.
+The type of data represented by this attribute. Defaults to 'Str' if left out. Options are 'Str', 'Int', 'HashRef', and 'DateTime'.
 
 =head4 default
 

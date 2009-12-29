@@ -1,4 +1,5 @@
-0.0301 - 2009-12-23
+0.0400 - 2009-12-28
+ - Added support for HashRef field types in Items. Note that JSONified they cannot exceed 1024 characters.
  - Now supports 15 digit positive integers and 9 digit negative integers.
  - Added a couple tests to make sure attribute methods are created.
  - Fixed some documentation bugs.

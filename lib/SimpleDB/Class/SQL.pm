@@ -15,6 +15,7 @@ The following methods are available from this class.
 =cut
 
 use Moose;
+use JSON;
 use DateTime;
 use DateTime::Format::Strptime;
 
@@ -248,6 +249,28 @@ sub parse_datetime {
 
 #--------------------------------------------------------
 
+=head2 parse_hashref ( string ) 
+
+Parses a JSON formatted string and returns an actual hash reference.
+
+=head3 string
+
+A string that is composed of a JSONified hash reference. 
+
+=cut
+
+sub parse_hashref {
+    my ($self, $value) = @_;
+    if ($value eq '') {
+        return {};
+    }
+    else {
+        return JSON::from_json($value);
+    }
+}
+
+#--------------------------------------------------------
+
 =head2 parse_int ( string ) 
 
 Parses an integer formatted string and returns an actual integer.
@@ -289,11 +312,15 @@ sub parse_value {
     $value ||= $registered_attributes->{$name}{default};
     # find isa
     my $isa = $registered_attributes->{$name}{isa} || '';
-    # pad integers
+    # unpad integers
     if ($isa eq 'Int') {
         $value = $self->parse_int($value); 
     }
-    # stringify dates
+    # unjsonify hash refs
+    elsif ($isa eq 'HashRef') {
+        $value = $self->parse_hashref($value);
+    }
+    # unstringify dates
     elsif ($isa eq 'DateTime') {
         $value = $self->parse_datetime($value);
     }
@@ -316,6 +343,28 @@ sub format_datetime {
     my ($self, $value) = @_;
     $value ||= DateTime->now;
     return DateTime::Format::Strptime::strftime('%Y-%m-%d %H:%M:%S %N %z',$value);
+}
+
+#--------------------------------------------------------
+
+=head2 format_hashref ( value )
+
+Returns a json formatted hashref. Example: C<{"foo":"bar"}>. See parse_hashref as this is the reverse of that. 
+
+B<Warning:> The total length of your hash reference after it's turned into JSON cannot exceed 1024 characters, as that's the field size limit for SimpleDB. Failing to heed this warning will result in corrupt data.
+
+=head3 value
+
+A hash reference.
+
+=cut
+
+sub format_hashref {
+    my ($self, $value) = @_;
+    unless (ref $value eq 'HASH') {
+        $value = {};
+    }
+    return JSON::to_json($value);
 }
 
 #--------------------------------------------------------
@@ -368,6 +417,10 @@ sub format_value {
     # pad integers
     if ($isa eq 'Int') {
         $value = $self->format_int($value); 
+    }
+    # jsonify hashrefs
+    elsif ($isa eq 'HashRef') {
+        $value = $self->format_hashref($value); 
     }
     # stringify dates
     elsif ($isa eq 'DateTime') {

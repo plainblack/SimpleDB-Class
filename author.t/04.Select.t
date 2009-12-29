@@ -1,4 +1,5 @@
-use Test::More tests => 30;
+use Test::More tests => 33;
+use Test::Deep;
 use Tie::IxHash;
 use lib ('../lib', 'lib');
 use DateTime;
@@ -32,7 +33,10 @@ is($select->quote_value("this 'that'"), q{'this ''that'''}, "hq escape");
 is($select->quote_value(q{this "that"}), q{'this ""that""'}, "quote escape");
 is($select->quote_value(q{this "'that'"}), q{'this ""''that''""'}, "both escape");
 is($select->format_value('unknown', 'that'), q{'that'}, "format a string");
-is($select->format_int(45), q{1000000045}, "format a number");
+is($select->format_int(45), q{000001000000045}, "format a number");
+is($select->parse_int(q{000001000000045}), 45, "format a number");
+is($select->format_hashref({this=>'that'}), '{"this":"that"}', 'format_hashref');
+cmp_deeply($select->parse_hashref('{"this":"that"}'), {this=>'that'}, 'format_hashref');
 
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
@@ -80,7 +84,7 @@ $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { 'quantity' => ['>', 3]},
     );
-is($select->to_sql, "select * from `foo_domain` where `quantity`>'1000000003'", "query with < where");
+is($select->to_sql, "select * from `foo_domain` where `quantity`>'000001000000003'", "query with < where");
 
 my $dt = DateTime->now;
 $select = SimpleDB::Class::SQL->new(
@@ -93,7 +97,7 @@ $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { 'quantity' => ['>=', -99999]},
     );
-is($select->to_sql, "select * from `foo_domain` where `quantity`>='0999900001'", "query with >= where");
+is($select->to_sql, "select * from `foo_domain` where `quantity`>='000000999900001'", "query with >= where");
 
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
