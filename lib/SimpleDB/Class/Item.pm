@@ -248,7 +248,7 @@ has simpledb => (
 
 =head2 id ( )
 
-Returns the unique id of this item.
+Returns the unique id of this item. B<Note:> Even though the primary key C<ItemName> (or C<id> as we call it) is a special property of an item, an C<id> attribute is also automatically added to every item when C<put> is called, which contains the same value as the C<ItemName>. This is so you can perform searches based upon the id, which is not something you can normally do with a C<Select> in SimpleDB.
 
 =cut
 
@@ -336,6 +336,8 @@ Inserts/updates the current attributes of this Item object to the database.  Ret
 
 sub put {
     my ($self) = @_;
+
+    # build the parameter list
     my $params = {ItemName => $self->id, DomainName=>$self->domain_name};
     my $i = 0;
     my $select = SimpleDB::Class::SQL->new(item_class=>ref($self)); 
@@ -353,6 +355,12 @@ sub put {
             $i++;
         }
     }
+
+    # add the id, so we can search on it
+    $params->{'Attribute.'.$i.'.Name'} = 'id';
+    $params->{'Attribute.'.$i.'.Value'} = $self->id;
+
+    # push changes
     my $simpledb = $self->simpledb;
     eval{$simpledb->cache->set($self->domain_name, $self->id, $attributes)};
     $simpledb->http->send_request('PutAttributes', $params);

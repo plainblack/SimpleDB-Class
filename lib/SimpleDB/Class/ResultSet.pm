@@ -146,6 +146,66 @@ sub fetch_result {
 
 #--------------------------------------------------------
 
+=head2 search ( where )
+
+Just like L<SimpleDB::Class::Domain/"search">, but searches within the confines of the current result set, and then returns a new result set.
+
+=head3 where
+
+A where clause as defined by L<SimpleDB::Class::SQL>.
+
+=cut
+
+sub search {
+    my ($self, $where) = @_;
+    my @ids;
+    while (my $item = $self->next) {
+        push @ids, $item->id;
+    }
+    my %composed_where = ( id => ['in',@ids], %{$where});
+    return $self->new(
+        simpledb    => $self->simpledb,
+        item_class  => $self->item_class,
+        where       => \%composed_where,
+        );
+}
+
+#--------------------------------------------------------
+
+=head2 update ( attributes )
+
+Calls C<update> and then C<put> on all the items in the result set. 
+
+=head3 attributes
+
+A hash reference containing name/value pairs to update in each item.
+
+=cut
+
+sub update {
+    my ($self, $attributes) = @_;
+    while (my $item = $self->next) {
+        $item->update($attributes)->put;
+    }
+}
+
+#--------------------------------------------------------
+
+=head2 delete ( )
+
+Calls C<delete> on all the items in the result set.
+
+=cut
+
+sub delete {
+    my ($self) = @_;
+    while (my $item = $self->next) {
+        $item->delete;
+    }
+}
+
+#--------------------------------------------------------
+
 =head2 next () 
 
 Returns the next result in the result set. Also fetches th next partial result set if there's a next token in the first result set and you've iterated through the first partial set.
@@ -222,6 +282,9 @@ sub handle_item {
     my %added = ();
     foreach my $attribute (@{$list}) {
         my $name = $attribute->{Name};
+
+        # skip handling the 'id' field
+        next if $name eq 'id';
 
         # add unknown attributes
         if (!exists $registered_attributes->{$name} && ! exists $added{$name}) {

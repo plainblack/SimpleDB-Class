@@ -1,6 +1,7 @@
 0.0500 2009-12-29
  - Added support for triggers on item attributes.
  - Added update(), delete(), and search() to result sets.
+ - Note that to make the search() work on result sets, an id field is automatically added to every domain. This unfortunately means that existing domains that don't have an id field populated with the id of the item aren't compatible with the search() method on the result set.
 
 0.0400 - 2009-12-28
  - Added support for HashRef field types in Items. Note that JSONified they cannot exceed 1024 characters.
