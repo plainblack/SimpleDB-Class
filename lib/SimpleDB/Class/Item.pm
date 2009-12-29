@@ -74,17 +74,34 @@ The type of data represented by this attribute. Defaults to 'Str' if left out. O
 
 The default value for this attribute. This should be specified even if it is 'None' or 'Undefined' or 'Null', because actuall null queries are slow in SimpleDB.
 
+=head4 trigger
+
+A sub reference that will be called like a method (has reference to $self), and is also passed the new and old values of this attribute. Works just like a L<Moose> trigger. See also L<Moose::Manual::Attributes/"Triggers">.
+
 =cut
 
 sub add_attributes {
     my ($class, %attributes) = @_;
     foreach my $name (keys %attributes) {
+        # i wish i could actually use Moose attributes here, but unfortunately
+        # Moose calls 'has' on __PACKAGE__ rather than $class, so it would insert
+        # the attributes into this class rather than each subclass
+        my $trigger = $attributes{$name}{trigger};
         my $accessor = sub { 
-                my ($self, $val) = @_; 
+                my ($self, $new) = @_; 
                 my $attr = $self->attribute_data;
-                if (defined $val) {
-                    $attr->{$name} = $val;
+                if (defined $new) {
+                    my $has_old = exists $attr->{name};
+                    my $old = $attr->{name};
+                    $attr->{$name} = $new;
                     $self->attribute_data($attr);
+                    if (defined $trigger) {
+                        my @params = ($self, $new);
+                        if ($has_old) {
+                            push @params, $old;
+                        }
+                        $trigger->(@params);
+                    }
                 }
                 return $attr->{$name};
         };

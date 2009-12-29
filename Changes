@@ -1,3 +1,7 @@
+0.0500 2009-12-29
+ - Added support for triggers on item attributes.
+ - Added update(), delete(), and search() to result sets.
+
 0.0400 - 2009-12-28
  - Added support for HashRef field types in Items. Note that JSONified they cannot exceed 1024 characters.
  - Now supports 15 digit positive integers and 9 digit negative integers.
