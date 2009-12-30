@@ -139,7 +139,9 @@ sub find {
         my $item = SimpleDB::Class::ResultSet
             ->new(simpledb=>$self->simpledb, item_class=>$self->item_class)
             ->handle_item($id, $result->{GetAttributesResult}{Attribute});
-        $cache->set($self->name, $id, $item->to_hashref);
+        if (defined $item) {
+            $cache->set($self->name, $id, $item->to_hashref);
+        }
         return $item;
     }
     elsif (my $e = SimpleDB::Class::Exception->caught) {

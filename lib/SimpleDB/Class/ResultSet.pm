@@ -247,7 +247,9 @@ sub next {
     my $e;
     if ($e = SimpleDB::Class::Exception::ObjectNotFound->caught) {
         my $itemobj = $self->handle_item($item->{Name}, $item->{Attribute});
-        eval{$cache->set($self->item_class->domain_name, $item->{Name}, $itemobj->to_hashref)};
+        if (defined $itemobj) {
+            eval{$cache->set($self->item_class->domain_name, $item->{Name}, $itemobj->to_hashref)};
+        }
         return $itemobj;
     }
     elsif ($e = SimpleDB::Class::Exception->caught) {
@@ -281,6 +283,11 @@ sub handle_item {
     my $select = SimpleDB::Class::SQL->new(item_class=>$self->item_class); 
     my %added = ();
     foreach my $attribute (@{$list}) {
+
+        # get attribute name
+        unless (exists $attribute->{Name}) {
+            return undef; # empty result set
+        }
         my $name = $attribute->{Name};
 
         # skip handling the 'id' field
