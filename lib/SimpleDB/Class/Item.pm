@@ -352,12 +352,14 @@ sub put {
             $value = $select->format_value($name, $value, 1);
             $params->{'Attribute.'.$i.'.Name'} = $name;
             $params->{'Attribute.'.$i.'.Value'} = $value;
+            $params->{'Attribute.'.$i.'.Replace'} = 'true';
             $i++;
         }
     }
 
     # add the id, so we can search on it
     $params->{'Attribute.'.$i.'.Name'} = 'id';
+    $params->{'Attribute.'.$i.'.Replace'} = 'true';
     $params->{'Attribute.'.$i.'.Value'} = $self->id;
 
     # push changes
