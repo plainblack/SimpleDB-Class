@@ -30,7 +30,7 @@ The id of the requested object.
 
 =head2 SimpleDB::Class::Exception::InvalidParam
 
-Thrown when an an object is found, but is corrupt. Isa SimpleDB::Class::Exception::ObjectNotFound.
+Thrown when a parameter isn't passed when it should have been, or if it's left undefined. Isa SimpleDB::Class::Exception::ObjectNotFound.
 
 =head2 SimpleDB::Class::Exception::InvalidObject
 

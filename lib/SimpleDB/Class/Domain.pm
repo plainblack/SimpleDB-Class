@@ -128,6 +128,7 @@ The unique identifier (called ItemName in AWS documentation) of the item to retr
 
 sub find {
     my ($self, $id) = @_;
+    SimpleDB::Class::Exception::InvalidParam->throw(name=>'id', value=>undef) unless defined $id;
     my $cache = $self->simpledb->cache;
     my $attributes = eval{$cache->get($self->name, $id)};
     my $e;
