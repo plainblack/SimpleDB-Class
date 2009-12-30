@@ -1,6 +1,7 @@
 0.0502 2009-12-29
  - If SimpleDB returns a null result set, it turns into an empty hashref of attributes and SimpleDB::Class wasn't dealing with that properly.
  - Was trying to cache undefined items in a couple places, that's fixed now.
+ - Fix some exception documentation.
 
 0.0501 2009-12-29
  - Wasn't setting replace on attributes, updates kept adding them over and over again.
