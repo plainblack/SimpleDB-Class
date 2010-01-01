@@ -84,7 +84,7 @@ Returns a string that contains the HTTP post data ready to make a request to Sim
 
 =head3 action
 
-The action to perform on SimpleDB. See the "Operations" section of the guide located at L<<a href="http://docs.amazonwebservices.com/AmazonSimpleDB/2009-04-15/DeveloperGuide/">http://docs.amazonwebservices.com/AmazonSimpleDB/2009-04-15/DeveloperGuide/</a>>.
+The action to perform on SimpleDB. See the "Operations" section of the guide located at L<http://docs.amazonwebservices.com/AmazonSimpleDB/2009-04-15/DeveloperGuide/>.
 
 =head3 params
 

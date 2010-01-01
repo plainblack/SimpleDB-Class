@@ -4,9 +4,39 @@ use Moose::Role;
 
 requires 'item_class';
 
+=head1 NAME
+
+SimpleDB::Class::Role::Itemized - Provides utility methods to classes that need to instantiate items.
+
+=head1 SYNOPSIS
+
+ my $class = $self->determine_item_class(\%attributes);
+
+ my $item = $self->instantiate_item(\%attributes, $id);
+
+=head1 DESCRIPTION
+
+This is a L<Moose::Role> that provides utility methods for instantiating L<SimpleDB::Class::Item>s.
+
+=head1 METHODS
+
+The following methods are available from this role.
+
+=cut
+
 #--------------------------------------------------------
 
 =head2 instantiate_item ( attributes, [ id ] )
+
+Instantiates an item based upon it's proper classname and then calls C<update> to populate it's attributes with data.
+
+=head3 attributes
+
+A hash reference of attribute data.
+
+=head3 id
+
+An optional id to instantiate the item with.
 
 =cut
 
@@ -44,6 +74,11 @@ sub determine_item_class {
     return $class;
 }
 
+=head1 LEGAL
+
+SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
+
+=cut
 
 
 1;

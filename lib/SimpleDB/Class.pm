@@ -74,7 +74,7 @@ It uses memcached to cache objects locally so that most of the time you don't ha
 
 =item *
 
-It has cascading retries, which means it automatically attepts to retry failed requests (you have to plan for failure on the net). 
+It has cascading retries, which means it automatically attempts to retry failed requests (you have to plan for failure on the net). 
 
 =item *
 
@@ -83,6 +83,10 @@ It automatically formats dates and integers for sortability in SimpleDB.
 =item *
 
 It automatically casts date fields as DateTime objects. 
+
+=item *
+
+It automatically serializes hashes into JSON so they can be stored in SimpleDB domain attributes, and deserializes on retrieval. 
 
 =item *
 
@@ -99,6 +103,18 @@ It automatically deals with the fact that you might have some attributes in your
 =item *
 
 L<SimpleDB::Class::ResultSet>s automatically fetch additional items from SimpleDB if a next token is provided.
+
+=item * 
+
+It allows for multiple similar object types to be stored in a single domain and then cast into different classes at retrieval time. See L<SimpleDB::Class::Item/"recast_using"> for details.
+
+=item *
+
+It allows for mass updates and deletes on L<SimpleDB::Class::ResultSet>s.
+
+=item *
+
+It lets you search within a subset of a domain, by letting you do a secondary C<search> on a L<SimpleDB::Class::ResultSet>. And you can continue to narrow the results by C<search>ing over an over on each new result set.
 
 =back
 
