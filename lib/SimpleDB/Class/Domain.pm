@@ -139,9 +139,7 @@ sub find {
             ItemName    => $id,
             DomainName  => $self->name,
         });
-        my $item = SimpleDB::Class::ResultSet
-            ->new(simpledb=>$self->simpledb, item_class=>$self->item_class)
-            ->handle_item($id, $result->{GetAttributesResult}{Attribute});
+        my $item = $self->parse_item($id, $result->{GetAttributesResult}{Attribute});
         if (defined $item) {
             $cache->set($self->name, $id, $item->to_hashref);
         }

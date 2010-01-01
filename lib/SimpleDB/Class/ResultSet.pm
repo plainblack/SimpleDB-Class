@@ -248,7 +248,7 @@ sub next {
     my $attributes = eval{$cache->get($self->item_class->domain_name, $item->{Name})}; 
     my $e;
     if ($e = SimpleDB::Class::Exception::ObjectNotFound->caught) {
-        my $itemobj = $self->handle_item($item->{Name}, $item->{Attribute});
+        my $itemobj = $self->parse_item($item->{Name}, $item->{Attribute});
         if (defined $itemobj) {
             eval{$cache->set($self->item_class->domain_name, $item->{Name}, $itemobj->to_hashref)};
         }
@@ -264,70 +264,6 @@ sub next {
     else {
         SimpleDB::Class::Exception->throw(error=>"An undefined error occured while fetching the item from cache.");
     }
-}
-
-#--------------------------------------------------------
-
-=head2 handle_item ( id , attributes ) 
-
-Converts the attributes section of an item in a result set into a L<SimpleDB::Class::Item> object.
-
-=cut
-
-sub handle_item {
-    my ($self, $id, $list) = @_;
-    unless (ref $list eq 'ARRAY') {
-        $list = [$list];
-    }
-
-    # format the data into a reasonable structure
-    my $attributes = {};
-    foreach my $attribute (@{$list}) {
-
-        # get attribute name
-        unless (exists $attribute->{Name}) {
-            return undef; # empty result set
-        }
-        my $name = $attribute->{Name};
-
-        # skip handling the 'id' field
-        next if $name eq 'id';
-
-        # get value
-        my $value = $attribute->{Value};
-
-        # create expected hashref
-        if (exists $attributes->{$name}) {
-            if (ref $attributes->{$name} ne 'ARRAY') {
-                $attributes->{$name} = [$attributes->{$name}];
-            }
-            push @{$attributes->{$name}}, $value;
-        }
-        else {
-            $attributes->{$name} = $value;
-        }
-    }
-
-    # now we can determine the item's class from attributes if necessary
-    my $item_class = $self->determine_item_class($attributes);
-
-    # and appropriately format it's attribute values
-    my $select = SimpleDB::Class::SQL->new(item_class=>$item_class); 
-    foreach my $name (keys %{$attributes}) {
-        if (ref $attributes->{$name} eq 'ARRAY') {
-            my $i = 0;
-            foreach my $value (@{$attributes->{$name}}) {
-                $attributes->{$name}[$i] = $select->parse_value($name, $value);
-                $i++;
-            }
-        }
-        else {
-            $attributes->{$name} = $select->parse_value($name, $attributes->{$name});
-        }
-    }
-
-    # now we're ready to instantiate
-    return $item_class->new(simpledb=>$self->simpledb, name=>$id)->update($attributes);
 }
 
 =head1 LEGAL

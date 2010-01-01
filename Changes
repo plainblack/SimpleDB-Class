@@ -1,8 +1,9 @@
 0.0601 2010-01-04
  - Documentation fixes.
+ - Moved SimpleDB::Class::ResultSet::handle_item() to SimpleDB::Class::Role::Itemized::parse_item().
 
 0.0600 2009-12-31
- - Added recasting to support multiple similar object types represented in a single domain. See SimpleDB::Class::Item recast_using() for details.
+ - Added recasting to support multiple similar object types represented in a single domain. See SimpleDB::Class::Item::recast_using() for details.
 
 0.0502 2009-12-29
  - If SimpleDB returns a null result set, it turns into an empty hashref of attributes and SimpleDB::Class wasn't dealing with that properly.
