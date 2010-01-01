@@ -47,6 +47,21 @@ A where clause as defined in L<SimpleDB::Class::SQL>. Either this or a result is
 
 #--------------------------------------------------------
 
+=head2 item_class ( )
+
+Returns the item_class passed into the constructor.
+
+=cut
+
+has item_class => (
+    is          => 'ro',
+    required    => 1,
+);
+
+with 'SimpleDB::Class::Role::Itemized';
+
+#--------------------------------------------------------
+
 =head2 where ( )
 
 Returns the where passed into the constructor.
@@ -67,19 +82,6 @@ Returns the simpledb passed into the constructor.
 =cut
 
 has simpledb => (
-    is          => 'ro',
-    required    => 1,
-);
-
-#--------------------------------------------------------
-
-=head2 item_class ( )
-
-Returns the item_class passed into the constructor.
-
-=cut
-
-has item_class => (
     is          => 'ro',
     required    => 1,
 );
@@ -257,7 +259,7 @@ sub next {
         return $e->rethrow;
     }
     elsif (defined $attributes) {
-        return $self->item_class->new(id=>$item->{Name}, simpledb=>$self->simpledb)->update($attributes);
+        return $self->instantiate_item($attributes,$item->{Name});
     }
     else {
         SimpleDB::Class::Exception->throw(error=>"An undefined error occured while fetching the item from cache.");
@@ -277,11 +279,9 @@ sub handle_item {
     unless (ref $list eq 'ARRAY') {
         $list = [$list];
     }
-    my $item = $self->item_class->new(simpledb=>$self->simpledb, name=>$id);
+
+    # format the data into a reasonable structure
     my $attributes = {};
-    my $registered_attributes = $self->item_class->attributes;
-    my $select = SimpleDB::Class::SQL->new(item_class=>$self->item_class); 
-    my %added = ();
     foreach my $attribute (@{$list}) {
 
         # get attribute name
@@ -293,14 +293,8 @@ sub handle_item {
         # skip handling the 'id' field
         next if $name eq 'id';
 
-        # add unknown attributes
-        if (!exists $registered_attributes->{$name} && ! exists $added{$name}) {
-           $item->add_attributes($name => { isa => 'Str' }); 
-           $added{$name} = 1;
-        }
-
         # get value
-        my $value = $select->parse_value($name, $attribute->{Value});
+        my $value = $attribute->{Value};
 
         # create expected hashref
         if (exists $attributes->{$name}) {
@@ -312,9 +306,28 @@ sub handle_item {
         else {
             $attributes->{$name} = $value;
         }
-
     }
-    return $item->update($attributes);
+
+    # now we can determine the item's class from attributes if necessary
+    my $item_class = $self->determine_item_class($attributes);
+
+    # and appropriately format it's attribute values
+    my $select = SimpleDB::Class::SQL->new(item_class=>$item_class); 
+    foreach my $name (keys %{$attributes}) {
+        if (ref $attributes->{$name} eq 'ARRAY') {
+            my $i = 0;
+            foreach my $value (@{$attributes->{$name}}) {
+                $attributes->{$name}[$i] = $select->parse_value($name, $value);
+                $i++;
+            }
+        }
+        else {
+            $attributes->{$name} = $select->parse_value($name, $attributes->{$name});
+        }
+    }
+
+    # now we're ready to instantiate
+    return $item_class->new(simpledb=>$self->simpledb, name=>$id)->update($attributes);
 }
 
 =head1 LEGAL

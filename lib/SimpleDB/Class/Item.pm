@@ -180,6 +180,27 @@ sub attributes { return {} };
 
 #--------------------------------------------------------
 
+=head2 recast_using ( attribute_name ) 
+
+Class method. Sets an attribue name to use to recast this object as another class. This allows you to pull multiple object types from the same domain. If the attribute is defined when reading the information from SimpleDB, the object will be cast as the classname returned, rather than the classname associated with the domain. The new class must be a subclass of the class associated with the domain, because you cannot C<set_domain_name> for the same domain twice, or you will break SimpleDB::Class.
+
+=head3 attribute_name
+
+The name of an attribute defined by C<add_attributes>. 
+
+=cut
+
+sub recast_using {
+    my ($class, $attribute_name) = @_;
+    _install_sub($class.'::_castor_attribute', sub { return $attribute_name });
+}
+
+sub _castor_attribute {
+    return undef;
+}
+
+#--------------------------------------------------------
+
 =head2 update ( attributes ) 
 
 Update a bunch of attributes all at once. Returns a reference to L<$self> so it can be chained into other methods.
@@ -192,7 +213,14 @@ A hash reference containing attribute names and values.
 
 sub update {
     my ($self, $attributes) = @_;
+    my $registered_attributes = $self->attributes;
     foreach my $attribute (keys %{$attributes}) {
+        # add unknown attributes
+        if (!exists $registered_attributes->{$attribute}) {
+           $self->add_attributes($attribute => { isa => 'Str' }); 
+        }
+
+        # update attribute value
         $self->$attribute($attributes->{$attribute});
     }
     return $self;

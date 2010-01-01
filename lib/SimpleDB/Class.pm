@@ -310,17 +310,9 @@ L<Memcached::libmemcached>
 
 =head1 TODO
 
-This is an experimental class, and as such the API will likely change frequently over the next few releases. Still left to figure out:
+Still left to figure out:
 
 =over
-
-=item *
-
-Sub-searches from relationships.
-
-=item *
-
-Creating subclasses of a domain based upon an attribute in a domain ( so you could have individual dog breed object types all in a dogs domain for example).
 
 =item *
 

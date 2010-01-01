@@ -1,4 +1,4 @@
-use Test::More tests => 20;
+use Test::More tests => 22;
 use Test::Deep;
 use lib ('../lib', 'lib');
 
@@ -45,16 +45,19 @@ ok($a_domain->can('size'), 'attribute methods created');
 ok(!$a_domain->can('title'), 'other class attribute methods not created');
 is($a_domain->size, 'small', 'fetched an item from the result set');
 
-my $child = $foo->domain('foo_child');
-$child->create;
-$child->insert({domainId=>'largered'});
+my $children = $foo->domain('foo_child');
+$children->create;
+my $child = $children->insert({domainId=>'largered'});
+isa_ok($child, 'Foo::Child');
+my $subchild = $children->insert({domainId=>'largered', class=>'Foo::SubChild'});
+isa_ok($subchild, 'Foo::SubChild');
 
 is($domain->find('largered')->parent->title, 'One', 'belongs_to works');
 is($domain->find('largered')->children->next->domainId, 'largered', 'has_many works');
 
 ok($domain->delete,'deleting domain');
 $parent->delete;
-$child->delete;
+$children->delete;
 ok(!grep({$_ eq 'foo_domain'} @{$foo->list_domains}), 'domain deleted');
 
 

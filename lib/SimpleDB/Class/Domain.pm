@@ -58,6 +58,8 @@ has item_class => (
     },
 );
 
+with 'SimpleDB::Class::Role::Itemized';
+
 #--------------------------------------------------------
 
 =head2 name ( )
@@ -150,8 +152,7 @@ sub find {
         return $e->rethrow;
     }
     elsif (defined $attributes) {
-        return $self->item_class->new(id=>$id, simpledb=>$self->simpledb)
-            ->update($attributes);
+        return $self->instantiate_item($attributes, $id);
     }
     else {
         SimpleDB::Class::Exception->throw(error=>"An undefined error occured while fetching the item.");
@@ -176,13 +177,7 @@ Optionally specify a unqiue id for this item.
 
 sub insert {
     my ($self, $attributes, $id) = @_;
-    my %params = (simpledb=>$self->simpledb);
-    if (defined $id && $id ne '') {
-        $params{id} = $id;
-    }
-    return $self->item_class->new(\%params)
-        ->update($attributes)
-        ->put;
+    return $self->instantiate_item($attributes, $id)->put;
 }
 
 #--------------------------------------------------------
