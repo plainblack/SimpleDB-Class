@@ -1,4 +1,4 @@
-use Test::More tests => 22;
+use Test::More tests => 24;
 use Test::Deep;
 use lib ('../lib', 'lib');
 
@@ -44,6 +44,10 @@ my $a_domain = $foos->next;
 ok($a_domain->can('size'), 'attribute methods created');
 ok(!$a_domain->can('title'), 'other class attribute methods not created');
 is($a_domain->size, 'small', 'fetched an item from the result set');
+$foos = $domain->search({size=>'small'});
+is($foos->count, 2, 'counting items in a result set');
+$foos = $domain->search({size=>'small'});
+is($foos->count({color=>'green'}), 1, 'counting subset of items in a result set');
 
 my $children = $foo->domain('foo_child');
 $children->create;

@@ -8,6 +8,8 @@ SimpleDB::Class::ResultSet - An iterator of items from a domain.
 
 This class is an iterator to walk to the items passed back from a query. 
 
+B<Warning:> Once you have a result set and you start calling methods on it, it will begin iterating over the result set. Therefore you can't call both C<next> and C<search>, or any other combinations of methods on an existing result set.
+
 =head1 METHODS
 
 The following methods are available from this class.
@@ -144,6 +146,41 @@ sub fetch_result {
     my $result = $self->simpledb->http->send_request('Select', \%params);
     $self->result($result);
     return $result;
+}
+
+#--------------------------------------------------------
+
+=head2 count ( [ where ] )
+
+Counts the items in the result set. Returns an integer. 
+
+=head3 where
+
+A where clause as defined by L<SimpleDB::Class::SQL>. If this is specified, then an additional query is executed before counting the items in the result set.
+
+=cut
+
+sub count {
+    my ($self, $where) = @_;
+    my @ids;
+    while (my $item = $self->next) {
+        push @ids, $item->id;
+    }
+    if ($where) {
+        my %composed_where = ( id => ['in',@ids], %{$where});
+        my $select = SimpleDB::Class::SQL->new(
+            item_class  => $self->item_class,
+            where       => \%composed_where,
+            output      => 'count(*)',
+        );
+        my $result = $self->simpledb->http->send_request('Select', {
+            SelectExpression    => $select->to_sql,
+        });
+        return $result->{SelectResult}{Item}{Attribute}{Value};
+    }
+    else {
+        return scalar @ids;
+    }
 }
 
 #--------------------------------------------------------

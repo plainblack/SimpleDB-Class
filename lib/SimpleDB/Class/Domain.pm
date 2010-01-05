@@ -207,7 +207,7 @@ sub count {
 
 #--------------------------------------------------------
 
-=head2 search ( where )
+=head2 search ( where, [ order_by, limit ] )
 
 Returns a L<SimpleDB::Class::ResultSet> object. 
 
@@ -217,14 +217,24 @@ WARNING: With this method you need to be aware that SimpleDB is eventually consi
 
 A where clause as defined by L<SimpleDB::Class::SQL>.
 
+=head3 order_by
+
+An order by clause as defined by L<SimpleDB::Class::SQL>.
+
+=head3 limit
+
+A limit clause as defined by L<SimpleDB::Class::SQL>.
+
 =cut
 
 sub search {
-    my ($self, $where) = @_;
+    my ($self, $where, $order_by, $limit) = @_;
     return SimpleDB::Class::ResultSet->new(
         simpledb    => $self->simpledb,
         item_class  => $self->item_class,
         where       => $where,
+        order_by    => $order_by,
+        limit       => $limit,
         );
 }
 

@@ -107,6 +107,12 @@ Null comparisons. These are very slow. Try inserting 'Null' or 'None' into a fie
 
 An attribute to order the result set by, defaults to ascending order. Can also pass in an array ref containing an attribute and 'desc' or 'asc'. If an array ref is passed in containing only an attribute name it is an implied descending order.
 
+ "foo"
+
+ ["foo","desc"]
+
+ ["foo"]
+
 =head4 limit
 
 An integer of a number of items to limit the result set to.

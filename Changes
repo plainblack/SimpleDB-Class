@@ -1,5 +1,6 @@
-0.0601 2010-01-04
+0.0700 2010-01-05
  - Documentation fixes.
+ - Added a count() method to the result set.
  - Moved SimpleDB::Class::ResultSet::handle_item() to SimpleDB::Class::Role::Itemized::parse_item().
 
 0.0600 2009-12-31
