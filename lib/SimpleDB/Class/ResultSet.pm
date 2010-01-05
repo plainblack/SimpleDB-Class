@@ -10,6 +10,8 @@ This class is an iterator to walk to the items passed back from a query.
 
 B<Warning:> Once you have a result set and you start calling methods on it, it will begin iterating over the result set. Therefore you can't call both C<next> and C<search>, or any other combinations of methods on an existing result set.
 
+B<Warning:> If you call a method like C<search> on a result set which causes another query to be run, know that the original result set must be very small. This is because there is a limit of 20 comparisons per request as a limitation of SimpleDB.
+
 =head1 METHODS
 
 The following methods are available from this class.
@@ -167,10 +169,13 @@ sub count {
         push @ids, $item->id;
     }
     if ($where) {
-        my %composed_where = ( id => ['in',@ids], %{$where});
+        my $clauses = { 
+            id      => ['in',@ids], 
+            '-and'  => $where,
+        };
         my $select = SimpleDB::Class::SQL->new(
             item_class  => $self->item_class,
-            where       => \%composed_where,
+            where       => $clauses,
             output      => 'count(*)',
         );
         my $result = $self->simpledb->http->send_request('Select', {
@@ -201,11 +206,14 @@ sub search {
     while (my $item = $self->next) {
         push @ids, $item->id;
     }
-    my %composed_where = ( id => ['in',@ids], %{$where});
+    my $clauses = { 
+        id      => ['in',@ids], 
+        '-and'  => $where,
+    };
     return $self->new(
         simpledb    => $self->simpledb,
         item_class  => $self->item_class,
-        where       => \%composed_where,
+        where       => $clauses,
         );
 }
 

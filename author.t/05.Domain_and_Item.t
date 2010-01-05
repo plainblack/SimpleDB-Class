@@ -1,7 +1,7 @@
-use Test::More tests => 24;
+use Test::More tests => 28;
 use Test::Deep;
 use lib ('../lib', 'lib');
-
+$|=1;
 
 my $access = $ENV{SIMPLEDB_ACCESS_KEY};
 my $secret = $ENV{SIMPLEDB_SECRET_KEY};
@@ -28,15 +28,19 @@ sleep 1; # it's eventually consistent, so we have to wait a bit to make sure it'
 is($parent->count, 2, 'should be 2 items');
 
 $domain->create;
-ok($domain->insert({color=>'red',size=>'large',parentId=>'one'}, 'largered'), 'adding item with id');
-ok($domain->insert({color=>'blue',size=>'small',parentId=>'two'}), 'adding item without id');
+ok($domain->insert({color=>'red',size=>'large',parentId=>'one',quantity=>5}, 'largered'), 'adding item with id');
+ok($domain->insert({color=>'blue',size=>'small',parentId=>'two',quantity=>1}), 'adding item without id');
 is($domain->find('largered')->size, 'large', 'find() works');
 
-my $x = $domain->insert({color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'}});
+my $x = $domain->insert({color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'},quantity=>3});
 isa_ok($x, 'Foo::Domain');
-cmp_deeply($x->to_hashref, {properties=>{this=>'that'}, color=>'orange',size=>'large',size_formatted=>'Large',parentId=>'one', start_date=>undef, quantity=>undef}, 'to_hashref()');
-$domain->insert({color=>'green',size=>'small',parentId=>'two'});
-$domain->insert({color=>'black',size=>'huge',parentId=>'one'});
+cmp_deeply($x->to_hashref, {properties=>{this=>'that'}, color=>'orange',size=>'large',size_formatted=>'Large',parentId=>'one', start_date=>undef, quantity=>3}, 'to_hashref()');
+$domain->insert({color=>'green',size=>'small',parentId=>'two',quantity=>11});
+$domain->insert({color=>'black',size=>'huge',parentId=>'one',quantity=>2});
+is($domain->max('quantity'), 11, 'max');
+is($domain->min('quantity'), 1, 'min');
+is($domain->max('quantity',{parentId=>'one'}), 5, 'max with clause');
+is($domain->min('quantity',{parentId=>'one'}), 2, 'min with clause');
 my $foos = $domain->search({size=>'small'});
 isa_ok($foos, 'SimpleDB::Class::ResultSet');
 isa_ok($foos->next, 'Foo::Domain');

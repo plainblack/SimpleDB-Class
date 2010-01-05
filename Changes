@@ -1,6 +1,8 @@
 0.0700 2010-01-05
- - Documentation fixes.
  - Added a count() method to the result set.
+ - Added order by and limit clauses to the search() method in domains.
+ - Added min() and max() methods to domains.
+ - Documentation fixes.
  - Moved SimpleDB::Class::ResultSet::handle_item() to SimpleDB::Class::Role::Itemized::parse_item().
 
 0.0600 2009-12-31

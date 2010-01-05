@@ -207,6 +207,82 @@ sub count {
 
 #--------------------------------------------------------
 
+=head2 max ( attribute, [ where ] )
+
+Returns the maximum value of an attribute.
+
+=head3 attribute
+
+The name of the attribute to find the maximum value of.
+
+=head3 where
+
+A where clause as defined by L<SimpleDB::Class::SQL>. An optional clause to limit the range of the maximum value.
+
+=cut
+
+sub max {
+    my ($self, $attribute, $clauses) = @_;
+    my $where = {
+        $attribute => ['!=','-1000001'],
+    };
+    if (ref $clauses eq 'HASH') {
+        $where->{'-and'} = $clauses;
+    }
+    my $select = SimpleDB::Class::SQL->new(
+        item_class  => $self->item_class,
+        where       => $where,
+        limit       => 1,
+        order_by    => [$attribute],
+        output      => $attribute,
+    );
+    my $result = $self->simpledb->http->send_request('Select', {
+        SelectExpression    => $select->to_sql,
+    });
+    my $value = $result->{SelectResult}{Item}{Attribute}{Value};
+    return $select->parse_value($attribute, $value);
+}
+
+#--------------------------------------------------------
+
+=head2 min ( attribute, [ where ] )
+
+Returns the minimum value of an attribute.
+
+=head3 attribute
+
+The name of the attribute to find the minimum value of.
+
+=head3 where
+
+A where clause as defined by L<SimpleDB::Class::SQL>. An optional clause to limit the range of the minimum value.
+
+=cut
+
+sub min {
+    my ($self, $attribute, $clauses) = @_;
+    my $where = {
+        $attribute => ['!=','-1000001'],
+    };
+    if (ref $clauses eq 'HASH') {
+        $where->{'-and'} = $clauses;
+    }
+    my $select = SimpleDB::Class::SQL->new(
+        item_class  => $self->item_class,
+        where       => $where,
+        limit       => 1,
+        order_by    => $attribute,
+        output      => $attribute,
+    );
+    my $result = $self->simpledb->http->send_request('Select', {
+        SelectExpression    => $select->to_sql,
+    });
+    my $value = $result->{SelectResult}{Item}{Attribute}{Value};
+    return $select->parse_value($attribute, $value);
+}
+
+#--------------------------------------------------------
+
 =head2 search ( where, [ order_by, limit ] )
 
 Returns a L<SimpleDB::Class::ResultSet> object. 

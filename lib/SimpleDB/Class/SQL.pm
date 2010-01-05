@@ -472,19 +472,19 @@ sub recurse_where {
             if (ref $value eq 'ARRAY') {
                 my $cmp = shift @{$value};
                 if ($cmp eq '>') {
-                    push @sets, $attribute.'>'.$self->format_value($key, $value->[0]);
+                    push @sets, $attribute.' > '.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq '<') {
-                    push @sets, $attribute.'<'.$self->format_value($key, $value->[0]);
+                    push @sets, $attribute.' < '.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq '<=') {
-                    push @sets, $attribute.'<='.$self->format_value($key, $value->[0]);
+                    push @sets, $attribute.' <= '.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq '>=') {
-                    push @sets, $attribute.'>='.$self->format_value($key, $value->[0]);
+                    push @sets, $attribute.' >= '.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq '!=') {
-                    push @sets, $attribute.'!='.$self->format_value($key, $value->[0]);
+                    push @sets, $attribute.' != '.$self->format_value($key, $value->[0]);
                 }
                 elsif ($cmp eq 'like') {
                     push @sets, $attribute.' like '.$self->format_value($key, $value->[0]);
@@ -513,7 +513,7 @@ sub recurse_where {
                     push @sets, $attribute.' is not null';
                 }
                 else {
-                    push @sets, $attribute.'='.$self->format_value($key, $value);
+                    push @sets, $attribute.' = '.$self->format_value($key, $value);
                 }
             }
         }
