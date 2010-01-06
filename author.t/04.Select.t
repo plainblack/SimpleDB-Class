@@ -84,32 +84,32 @@ $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { 'quantity' => ['>', 3]},
     );
-is($select->to_sql, "select * from `foo_domain` where `quantity`>'000001000000003'", "query with < where");
+is($select->to_sql, "select * from `foo_domain` where `quantity` > '000001000000003'", "query with < where");
 
 my $dt = DateTime->now;
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { 'start_date' => ['<', $dt]},
     );
-is($select->to_sql, "select * from `foo_domain` where `start_date`<'".DateTime::Format::Strptime::strftime('%Y-%m-%d %H:%M:%S %N %z',$dt)."'", "query with < where");
+is($select->to_sql, "select * from `foo_domain` where `start_date` < '".DateTime::Format::Strptime::strftime('%Y-%m-%d %H:%M:%S %N %z',$dt)."'", "query with < where");
 
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { 'quantity' => ['>=', -99999]},
     );
-is($select->to_sql, "select * from `foo_domain` where `quantity`>='000000999900001'", "query with >= where");
+is($select->to_sql, "select * from `foo_domain` where `quantity` >= '000000999900001'", "query with >= where");
 
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { 'color' => ['<=', '3']},
     );
-is($select->to_sql, "select * from `foo_domain` where `color`<='3'", "query with <= where");
+is($select->to_sql, "select * from `foo_domain` where `color` <= '3'", "query with <= where");
 
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { 'color' => ['!=', '3']},
     );
-is($select->to_sql, "select * from `foo_domain` where `color`!='3'", "query with != where");
+is($select->to_sql, "select * from `foo_domain` where `color` != '3'", "query with != where");
 
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
@@ -125,9 +125,9 @@ is($select->to_sql, "select * from `foo_domain` where `color` not like '3%'", "q
 
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
-    where           => { 'color' => ['between', 2,5]},
+    where           => { 'quantity' => ['between', -2,5]},
     );
-is($select->to_sql, "select * from `foo_domain` where `color` between '2' and '5'", "query with between where");
+is($select->to_sql, "select * from `foo_domain` where `quantity` between '000000999999998' and '000001000000005'", "query with between where");
 
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
@@ -146,14 +146,14 @@ $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { '-intersection' => \%intersection},
     );
-is($select->to_sql, "select * from `foo_domain` where (`color`='2' intersection `size`='this')", "query with or where");
+is($select->to_sql, "select * from `foo_domain` where (`color` = '2' intersection `size` = 'this')", "query with or where");
 
 tie my %or, 'Tie::IxHash', color=>2, size=>'this';
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { '-or' => \%or},
     );
-is($select->to_sql, "select * from `foo_domain` where (`color`='2' or `size`='this')", "query with or where");
+is($select->to_sql, "select * from `foo_domain` where (`color` = '2' or `size` = 'this')", "query with or where");
 
 tie my %and, 'Tie::IxHash', size=>'this', that=>1;
 tie my %or, 'Tie::IxHash', color=>2, '-and'=>\%and;
@@ -161,7 +161,7 @@ $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { '-or' => \%or},
     );
-is($select->to_sql, "select * from `foo_domain` where (`color`='2' or (`size`='this' and `that`='1'))", "query with or where");
+is($select->to_sql, "select * from `foo_domain` where (`color` = '2' or (`size` = 'this' and `that` = '1'))", "query with or where");
 
 tie my %where, 'Tie::IxHash', color=>2, size=>'this';
 $select = SimpleDB::Class::SQL->new(
@@ -171,5 +171,5 @@ $select = SimpleDB::Class::SQL->new(
     where           => \%where,
     output          => 'that',
     );
-is($select->to_sql, "select `that` from `foo_domain` where `color`='2' and `size`='this' order by `color` desc limit 44", "everything query");
+is($select->to_sql, "select `that` from `foo_domain` where `color` = '2' and `size` = 'this' order by `color` desc limit 44", "everything query");
 

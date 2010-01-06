@@ -1,3 +1,6 @@
+0.0701 2010-01-06
+ - Fixed SQL author tests.
+
 0.0700 2010-01-05
  - Added a count() method to the result set.
  - Added order by and limit clauses to the search() method in domains.
