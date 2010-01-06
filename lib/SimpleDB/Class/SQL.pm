@@ -291,7 +291,7 @@ A string that is composed of an integer + 1000000000 and then padded to have pre
 
 sub parse_int {
     my ($self, $value) = @_;
-    $value ||= 0;
+    $value ||= '000001000000000';
     return $value-1000000000;
 }
 

@@ -1,5 +1,6 @@
 0.0701 2010-01-06
  - Fixed SQL author tests.
+ - Fixed parsing of empty integers returned from SimpleDB.
 
 0.0700 2010-01-05
  - Added a count() method to the result set.
