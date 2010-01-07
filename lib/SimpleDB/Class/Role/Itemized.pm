@@ -146,7 +146,7 @@ sub parse_item {
     }
 
     # now we're ready to instantiate
-    return $item_class->new(simpledb=>$self->simpledb, name=>$id)->update($attributes);
+    return $item_class->new(simpledb=>$self->simpledb, id=>$id)->update($attributes);
 }
 
 =head1 LEGAL

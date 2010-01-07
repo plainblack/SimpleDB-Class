@@ -1,3 +1,6 @@
+0.0702 2010-01-06
+ - Found and fixed a major bug where id's were getting reset on items returned from result sets.
+
 0.0701 2010-01-06
  - Fixed SQL author tests.
  - Fixed parsing of empty integers returned from SimpleDB.
