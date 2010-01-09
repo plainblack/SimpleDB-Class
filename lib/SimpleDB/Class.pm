@@ -98,11 +98,11 @@ It automatically generates UUID based ItemNames (unique IDs) if you don't want t
 
 =item *
 
-It automatically deals with the fact that you might have some attributes in your L<SimpleDB::Class::Item>s that aren't specified in your L<SimpleDB::Class::Domain> subclasses, and creates accessors and mutators for them on the fly at retrieval time. 
+It automatically deals with the fact that you might have some attributes in your items that aren't in your L<SimpleDB::Class::Item> subclasses, and creates accessors and mutators for them on the fly at retrieval time. 
 
 =item *
 
-L<SimpleDB::Class::ResultSet>s automatically fetch additional items from SimpleDB if a next token is provided.
+L<SimpleDB::Class::ResultSet>s automatically fetch additional items from SimpleDB if a next token is provided, so you don't have to care that SimpleDB sends you back data in small packets.
 
 =item * 
 
@@ -110,7 +110,7 @@ It allows for multiple similar object types to be stored in a single domain and 
 
 =item *
 
-It allows for mass updates and deletes on L<SimpleDB::Class::ResultSet>s.
+It allows for mass updates and deletes on L<SimpleDB::Class::ResultSet>s, which is a nice level of automation to keep your code small.
 
 =item *
 
@@ -120,7 +120,7 @@ It lets you search within a subset of a domain, by letting you do a secondary C<
 
 =head2 Eventual Consistency
 
-SimpleDB is eventually consistent, which means that if you do a write, and then read directly after the write you may not get what you just wrote. L<SimpleDB::Class> gets around this problem for the post part because it caches all L<SimpleDB::Class::Item>s in memcached. That is to say that if an object can be read from cache, it will be. The one area where this falls short are some methods in L<SimpleDB::Class::Domain> that perform searches on the database which look up items based upon their attributes rather than based upon id. Even in those cases, once an object is located we try to pull it from cache rather than using the data SimpleDB gave us, simply because the cache may be more current. However, a search result may return too few (inserts pending) or too many (deletes pending) results in L<SimpleDB::Class::ResultSet>, or it may return an object which no longer fits certain criteria that you just searched for (updates pending). As long as you're aware of it, and write your programs accordingly, there shouldn't be a problem.
+SimpleDB is eventually consistent, which means that if you do a write, and then read directly after the write you may not get what you just wrote. L<SimpleDB::Class> gets around this problem for the post part because it caches all L<SimpleDB::Class::Item>s in memcached. That is to say that if an object can be read from cache, it will be. The one area where this falls short are some methods in L<SimpleDB::Class::Domain> and L<SimpleDB::Class::ResultSet> that perform searches on the database which look up items based upon their attributes rather than based upon id. Even in those cases, once an object is located we try to pull it from cache rather than using the data SimpleDB gave us, simply because the cache may be more current. However, a search result may return too few (inserts pending) or too many (deletes pending) results in L<SimpleDB::Class::ResultSet>, or it may return an object which no longer fits certain criteria that you just searched for (updates pending). As long as you're aware of it, and write your programs accordingly, there shouldn't be a problem.
 
 Does all this mean that this module makes SimpleDB as ACID compliant as a traditional RDBMS? No it does not. There are still no locks on domains (think tables), or items (think rows). So you probably shouldn't be storing sensitive financial transactions in this. We just provide an easy to use API that will allow you to more easily and a little more safely take advantage of Amazon's excellent SimpleDB service for things like storing logs, metadata, and game data.
 
@@ -310,8 +310,9 @@ sub list_domains {
 This package requires the following modules:
 
 L<XML::Simple>
-L<AnyEvent::HTTP>
-L<Net::SSLeay>
+L<LWP>
+L<TimeHiRes>
+L<Crypt::SSLeay>
 L<Sub::Name>
 L<DateTime>
 L<DateTime::Format::Strptime>

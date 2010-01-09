@@ -15,8 +15,6 @@ SimpleDB::Class::HTTP - The network interface to the SimpleDB service.
 
 This class will let you quickly and easily inteface with AWS SimpleDB. It throws exceptions from L<SimpleDB::Class::Exception>, but other than that doesn't rely on any of the other modules in the SimpleDB::Class system, which means it's very light weight. Although we haven't run any benchmarks, it should outperform any of the other Perl modules that exist today. 
 
-It's also got built-in L<AnyEvent> support, so you can use it in your L<Coro>, L<POE>, or other event frameworks and it will handle its requests and timers in a non-blocking fashion.
-
 =head1 METHODS
 
 The following methods are available from this class.
@@ -26,7 +24,9 @@ The following methods are available from this class.
 use Moose;
 use Digest::SHA qw(hmac_sha256_base64);
 use XML::Simple;
-use AnyEvent::HTTP;
+use LWP::UserAgent;
+use HTTP::Request;
+use Time::HiRes qw(usleep);
 use URI::Escape qw(uri_escape_utf8);
 use SimpleDB::Class::Exception;
 
@@ -116,7 +116,11 @@ sub construct_request {
     $signature = hmac_sha256_base64($signature, $self->secret_key) . '=';
     $post_data .= '&Signature=' . uri_escape_utf8($signature, $encoding_pattern);
 
-    return $post_data;
+    my $request = HTTP::Request->new('POST', 'https://sdb.amazonaws.com/');
+    $request->content_type("application/x-www-form-urlencoded; charset=utf-8");
+    $request->content($post_data);
+
+    return $request;
 }
 
 #--------------------------------------------------------
@@ -139,40 +143,29 @@ See create_request() for details.
 
 sub send_request {
     my ($self, $action, $params) = @_;
-    my $retries = 1;
     my $request = $self->construct_request($action, $params);
     # loop til we get a response or throw an exception
-    while (1) { 
+    foreach my $retry (1..5) { 
 
         # make the request
-        my $response_returned = AnyEvent->condvar;
-        http_post('https://sdb.amazonaws.com/',
-            $request,
-            timeout     => 30,
-            headers     => {
-                'Content-Type'  => 'application/x-www-form-urlencoded; charset=utf-8',
-            },
-            sub { $response_returned->send(@_); } 
-        );
-        my ($body, $headers) = $response_returned->recv;
+        my $ua = LWP::UserAgent->new;
+        $ua->timeout(30);
+        my $response = $ua->request($request);
 
         # got a possibly recoverable error, let's retry
-        if ($headers->{Status} >= 500 && $headers->{Status} < 600) {
-            if ($retries < 5) {
-                my $sleeper = AnyEvent->condvar;
-                my $w = AnyEvent->timer( after => ((4 ** $retries) / 10), cb => sub { $sleeper->send });
-                $retries++;
-                $sleeper->recv;
+        if ($response->code >= 500 && $response->code < 600) {
+            if ($retry < 5) {
+                usleep((4 ** $retry) * 100_000);
             }
             else {
-                warn $headers->{Reason};
-                SimpleDB::Class::Exception::Connection->throw(error=>'Exceeded maximum retries.', status_code=>$headers->{Status});
+                warn $response->header('Reason');
+                SimpleDB::Class::Exception::Connection->throw(error=>'Exceeded maximum retries.', status_code=>$response->code);
             }
         }
 
         # not a retry
         else {
-            return $self->handle_response($body, $headers);
+            return $self->handle_response($response);
         }
     }
 }
@@ -196,20 +189,20 @@ The HTTP headers.
 =cut
 
 sub handle_response {
-    my ($self, $body, $headers) = @_;
-    my $content = eval {XML::Simple::XMLin($body)};
+    my ($self, $response) = @_;
+    my $content = eval {XML::Simple::XMLin($response->content)};
 
     # choked reconstituing the XML, probably because it wasn't XML
     if ($@) {
         SimpleDB::Class::Exception::Response->throw(
             error       => 'Response was garbage. Confirm Net::SSLeay, XML::Parser, and XML::Simple installations.', 
-            status_code => $headers->{Status},
-            response    => [$body, $headers],
+            status_code => $response->code,
+            response    => $response,
         );
     }
 
     # got a valid response
-    elsif ($headers->{Status} >= 200 && $headers->{Status} < 300) {
+    elsif ($response->is_success) {
         return $content;
     }
 
@@ -217,11 +210,11 @@ sub handle_response {
     else {
         SimpleDB::Class::Exception::Response->throw(
             error       => $content->{Errors}{Error}{Message},
-            status_code => $headers->{Status},
+            status_code => $response->code,
             error_code  => $content->{Errors}{Error}{Code},
             box_usage   => $content->{Errors}{Error}{BoxUsage},
             request_id  => $content->{RequestID},
-            response    => [$body, $headers],
+            response    => $response,
         );
     }
 }
