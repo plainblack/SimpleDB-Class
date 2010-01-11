@@ -54,8 +54,8 @@ SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB serv
   
  my $specific_book = $library->domain('book')->find('id goes here');
 
- my $books = $library->domain('publisher')->books;
- my $books = $library->domain('book')->search({publish_date => DateTime->new(year=>2001)});
+ my $books = $library->domain('publisher')->find($id)->books;
+ my $books = $library->domain('book')->search({publish_date => ['between', DateTime->new(year=>2001), DateTime->new(year=>2003)]});
  while (my $book = $books->next) {
     say $book->title;
  }
