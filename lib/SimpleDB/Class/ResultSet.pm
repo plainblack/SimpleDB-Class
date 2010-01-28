@@ -273,7 +273,7 @@ sub next {
         if (exists $result->{SelectResult}{NextToken}) {
             $self->iterator(0);
             $iterator = 0;
-            $result = $self->fetch_results;
+            $result = $self->fetch_result;
         }
         else {
             return undef;

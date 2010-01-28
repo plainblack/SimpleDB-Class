@@ -29,6 +29,7 @@ use HTTP::Request;
 use Time::HiRes qw(usleep);
 use URI::Escape qw(uri_escape_utf8);
 use SimpleDB::Class::Exception;
+use URI;
 
 #--------------------------------------------------------
 
@@ -45,6 +46,12 @@ The access key given to you from Amazon when you sign up for the SimpleDB servic
 =head4 secret_key
 
 The secret access key given to you from Amazon.
+
+=head4 simpledb_uri
+
+The constructor that SimpleDB::Class will connect to.  Defaults to: 
+   
+ URI->new('https://sdb.amazonaws.com/')
 
 =cut
 
@@ -74,6 +81,38 @@ has 'secret_key' => (
     is              => 'ro',
     required        => 1,
     documentation   => 'The AWS SimpleDB secret access key id provided by Amazon.',
+);
+
+#--------------------------------------------------------
+
+=head2 simpledb_uri ( )
+
+Returns the L<URI> object passed into the constructor that SimpleDB::Class will connect to.  Defaults to: 
+
+ URI->new('https://sdb.amazonaws.com/')
+
+=cut
+
+has simpledb_uri => (
+    is      => 'ro',
+    default => sub { URI->new('http://sdb.amazonaws.com/') },
+);
+
+#--------------------------------------------------------
+
+=head2 user_agent ( )
+
+Returns the L<LWP::UserAgent> object that is used to connect to SimpleDB. It's cached here so it doesn't have to be created each time. 
+
+=cut
+
+has user_agent => (
+    is      => 'ro',
+    default => sub { 
+        my $ua = LWP::UserAgent->new;
+        $ua->timeout(30);
+        return $ua;
+    },
 );
 
 #--------------------------------------------------------
@@ -112,11 +151,11 @@ sub construct_request {
     chop $post_data;
 
     # sign the post data
-    my $signature = "POST\nsdb.amazonaws.com\n/\n". $post_data;
+    my $signature = "POST\n".$self->simpledb_uri->host."\n/\n". $post_data;
     $signature = hmac_sha256_base64($signature, $self->secret_key) . '=';
     $post_data .= '&Signature=' . uri_escape_utf8($signature, $encoding_pattern);
 
-    my $request = HTTP::Request->new('POST', 'https://sdb.amazonaws.com/');
+    my $request = HTTP::Request->new('POST', $self->simpledb_uri->as_string);
     $request->content_type("application/x-www-form-urlencoded; charset=utf-8");
     $request->content($post_data);
 
@@ -148,8 +187,7 @@ sub send_request {
     foreach my $retry (1..5) { 
 
         # make the request
-        my $ua = LWP::UserAgent->new;
-        $ua->timeout(30);
+        my $ua = $self->user_agent;
         my $response = $ua->request($request);
 
         # got a possibly recoverable error, let's retry

@@ -159,6 +159,10 @@ The secret access key given to you from Amazon.
 
 An array reference of cache servers. See L<SimpleDB::Class::Cache> for details.
 
+=head4 simpledb_uri
+
+An optional L<URI> object to connect to an alternate SimpleDB server. See also L<SimpleDB::Class::HTTP/"simpledb_uri">.
+
 =cut
 
 #--------------------------------------------------------
@@ -239,6 +243,25 @@ has 'secret_key' => (
 
 #--------------------------------------------------------
 
+=head2 simpledb_uri ( )
+
+Returns the L<URI> object passed into the constructor, if any. See also L<SimpleDB::Class::HTTP/"simpledb_uri">.
+
+=head2 has_simpledb_uri ( )
+
+Returns a boolean indicating whether the user has overridden the URI.
+
+=cut
+
+has simpledb_uri => (
+    is          => 'ro',
+    predicate   => 'has_simpledb_uri',
+    default     => undef,
+);
+
+
+#--------------------------------------------------------
+
 =head2 http ( )
 
 Returns the L<SimpleDB::Class::HTTP> instance used to connect to the SimpleDB service.
@@ -250,7 +273,11 @@ has http => (
     lazy            => 1,
     default         => sub { 
                         my $self = shift; 
-                        return SimpleDB::Class::HTTP->new(access_key=>$self->access_key, secret_key=>$self->secret_key);
+                        my %params = (access_key=>$self->access_key, secret_key=>$self->secret_key);
+                        if ($self->has_simpledb_uri) {
+                            $params{simpledb_uri} = $self->simpledb_uri;
+                        }
+                        return SimpleDB::Class::HTTP->new(%params);
                         },
 );
 
