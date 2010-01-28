@@ -324,6 +324,7 @@ L<Module::Find>
 L<UUID::Tiny>
 L<Exception::Class>
 L<Memcached::libmemcached>
+L<Clone>
 
 =head1 TODO
 

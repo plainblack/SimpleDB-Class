@@ -18,6 +18,7 @@ use Moose;
 use JSON;
 use DateTime;
 use DateTime::Format::Strptime;
+use Clone qw(clone);
 
 #--------------------------------------------------------
 
@@ -545,7 +546,7 @@ sub to_sql {
     # where
     my $where='';
     if ($self->has_where) {
-        $where = $self->recurse_where($self->where);
+        $where = $self->recurse_where(clone($self->where));
         if ($where ne '') {
             $where = ' where '.$where;
         }

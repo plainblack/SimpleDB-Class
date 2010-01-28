@@ -1,6 +1,13 @@
-0.0801 2010-01-11
+0.0802 2010-01-28
+ - Fixed a couple problems with calling 'next tokens' on result sets.
+ - Added dependency on Clone.
+
+0.0801 2010-01-19
+ - Fixed a problem with fetching items from cache.
  - Fixed some documentation.
+ - Fixed some test bugs.
  - Released 0.0800 as 0.0702 by accident.
+ - Added more author tests.
 
 0.0800 2010-01-09
  - Found and fixed a major bug where id's were getting reset on items returned from result sets.

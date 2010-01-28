@@ -409,6 +409,7 @@ sub to_hashref {
     my ($self) = @_;
     my %properties;
     foreach my $attribute (keys %{$self->attributes}) {                                                
+        next if $attribute eq 'id';
         $properties{$attribute} = $self->$attribute;
     }
     return \%properties;

@@ -1,4 +1,4 @@
-use Test::More tests => 28;
+use Test::More tests => 35;
 use Test::Deep;
 use lib ('../lib', 'lib');
 $|=1;
@@ -62,6 +62,16 @@ isa_ok($subchild, 'Foo::SubChild');
 
 is($domain->find('largered')->parent->title, 'One', 'belongs_to works');
 is($domain->find('largered')->children->next->domainId, 'largered', 'has_many works');
+
+my $j = $domain->insert({start_date=>DateTime->new(year=>2000, month=>5, day=>5, hour=>5, minute=>5, second=>5), color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'},quantity=>3});
+my $j1 = $domain->find($j->id);
+cmp_ok($j->start_date, '==', $j1->start_date, 'dates in are dates out');
+is($j->start_date->year, 2000, 'year');
+is($j->start_date->month, 5, 'month');
+is($j->start_date->day, 5, 'day');
+is($j->start_date->hour, 5, 'hour');
+is($j->start_date->minute, 5, 'minute');
+is($j->start_date->second, 5, 'second');
 
 ok($domain->delete,'deleting domain');
 $parent->delete;

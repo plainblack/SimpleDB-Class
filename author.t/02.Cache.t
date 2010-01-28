@@ -1,5 +1,6 @@
-use Test::More tests => 7;
+use Test::More tests => 14;
 use Tie::IxHash;
+use DateTime;
 use lib ('../lib', 'lib');
 
 my $a = {foo=>'A'};
@@ -18,3 +19,14 @@ $cache->delete('foo',"a");
 is(eval{$cache->get('foo',"a")}, undef, 'delete');
 $cache->flush;
 is(eval{$cache->get('foo',"b")}, undef, 'flush');
+
+my $foo = {a=>'b', date=>DateTime->new(year=>2000, month=>5, day=>5, hour=>5, minute=>5, second=>5)};
+$cache->set('foo','foo',$foo);
+my $foo1 = $cache->get('foo','foo');
+cmp_ok($foo->{date}, '==', $foo1->{date}, 'dates in are dates out');
+is($foo1->{date}->year, 2000, 'year');
+is($foo1->{date}->month, 5, 'month');
+is($foo1->{date}->day, 5, 'day');
+is($foo1->{date}->hour, 5, 'hour');
+is($foo1->{date}->minute, 5, 'minute');
+is($foo1->{date}->second, 5, 'second');

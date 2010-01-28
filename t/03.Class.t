@@ -1,10 +1,10 @@
 use Test::More tests => 19;
 use Test::Deep;
 use lib '../lib';
-diag( "Testing SimpleDB::Class $SimpleDB::Class::VERSION" );
 
 use_ok( 'SimpleDB::Class::Exception');
 use_ok( 'SimpleDB::Class' );
+diag( "Testing SimpleDB::Class $SimpleDB::Class::VERSION" );
 
 my $db = SimpleDB::Class->new(secret_key=>'secretxx', access_key=>'accessyy', cache_servers=>[{'socket' => '/tmp/foo/bar'}]);
 
