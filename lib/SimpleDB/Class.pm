@@ -409,6 +409,8 @@ A low level SimpleDB accessor that's in its infancy and may be abandoned, but ap
 
 =back
 
+In addition to clients, there is at least one other API compatible server out there that basically lets you host your own SimpleDB if you don't want to put it in Amazon's cloud. It's called M/DB. You can read more about it here: L<http://gradvs1.mgateway.com/main/index.html?path=mdb>. Though I haven't tested it, since it's API compatible, you should be able to use SimpleDB::Class with it.
+
 =head1 AUTHOR
 
 JT Smith <jt_at_plainblack_com>
