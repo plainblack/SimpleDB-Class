@@ -108,11 +108,7 @@ Returns the L<LWP::UserAgent> object that is used to connect to SimpleDB. It's c
 
 has user_agent => (
     is      => 'ro',
-    default => sub { 
-        my $ua = LWP::UserAgent->new;
-        $ua->timeout(30);
-        return $ua;
-    },
+    default => sub { LWP::UserAgent->new(timeout=>30, keep_alive=>1); },
 );
 
 #--------------------------------------------------------

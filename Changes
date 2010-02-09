@@ -1,3 +1,6 @@
+0.0803 2010-02-09
+ - Enabled keep alives, which speeds up requests. 
+
 0.0802 2010-01-28
  - Fixed a couple problems with calling 'next tokens' on result sets.
  - Added dependency on Clone.
