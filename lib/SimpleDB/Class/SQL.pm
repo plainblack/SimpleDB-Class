@@ -199,7 +199,8 @@ has limit => (
 
 =head2 quote_value ( string )
 
-Escapes ' and " in values.
+Escapes ' and " in values.  If C<itemName()> is what's passed in, it will not be quoted.
+
 
 =head3 string
 
@@ -209,6 +210,9 @@ The value to escape.
 
 sub quote_value {
     my ($self, $string) = @_;
+    if ($string eq 'itemName()') {
+        return $string;
+    }
     $string =~ s/'/''/g;
     $string =~ s/"/""/g;
     return "'".$string."'";
@@ -218,7 +222,7 @@ sub quote_value {
 
 =head2 quote_attribute ( string )
 
-Escapes an attribute with so that it can contain spaces and other special characters by wrapping it in backticks `.
+Escapes an attribute with so that it can contain spaces and other special characters by wrapping it in backticks `. If C<itemName()> is what's passed in, it will not be quoted.
 
 =head3 string
 
@@ -228,6 +232,9 @@ The attribute name to escape.
 
 sub quote_attribute {
     my ($self, $string) = @_;
+    if ($string eq 'itemName()') {
+        return $string;
+    }
     $string =~ s/`/``/g;
     return "`".$string."`";
 }

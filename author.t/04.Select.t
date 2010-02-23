@@ -1,4 +1,4 @@
-use Test::More tests => 33;
+use Test::More tests => 36;
 use Test::Deep;
 use Tie::IxHash;
 use lib ('../lib', 'lib');
@@ -28,6 +28,9 @@ isa_ok($select, 'SimpleDB::Class::SQL');
 
 is($select->to_sql, 'select * from `foo_domain`', "simple query");
 
+is($select->quote_attribute("this"), q{`this`}, "quote attribute");
+is($select->quote_attribute("itemName()"), q{itemName()}, "don't escape itemName() as attribute");
+is($select->quote_value("itemName()"), q{itemName()}, "don't escape itemName() as value");
 is($select->quote_value("this that"), q{'this that'}, "no escape");
 is($select->quote_value("this 'that'"), q{'this ''that'''}, "hq escape");
 is($select->quote_value(q{this "that"}), q{'this ""that""'}, "quote escape");

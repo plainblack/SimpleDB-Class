@@ -1,0 +1,51 @@
+=head1 SimpleDB::Class FAQ
+
+The following are some of the questions people have asked about how to use the L<SimpleDB::Class>.
+
+=head2 How can I store multiple objects in the same domain?
+
+Use L<SimpleDB::Class::Item/"recast_using">. It works like this. First you have a base class like so:
+
+ package StellarBody;
+
+ use Moose;
+ extends 'SimpleDB::Class::Item';
+
+ __PACKAGE__->set_domain_name('bodies');
+ --PACKAGE__->add_attributes(
+    name        => { isa=>'Str' },
+    star_id     => { isa=>'Str' },
+    class_name  => { isa=>'Str' },
+    );
+ 
+ __PACKAGE__->recast_using('class_name');
+
+ 1;
+
+The C<recast_using> command sets up the ability to then dynamically load multiple object types depending upon what's in the C<class_name> field. For example:
+
+ package GasGiant;
+
+ use Moose;
+ extends 'Planet';
+
+ 1;
+
+So now when an object is loaded from SimpleDB with a C<class_name> field of C<GasGiant>, that object will be loaded instead of C<StellarBody>.
+
+=head2 How can I shard objects across multiple domains?
+
+Given the previous example of using C<recast_using> to store multiple object types in the same domain, you can do something similar to make sure that some object types get stored in a different domain. You simply add a new C<set_domain_name> command to the subclass:
+
+ package GasGiant;
+
+ use Moose;
+ extends 'Planet';
+
+ __PACKAGE__->set_domain_name('gas_giants');
+
+ 1;
+
+Now all C<GasGiant> objects will be stored in the C<gas_giants> domain, but all other C<StellarBody> objects and subclasses will be stored in the C<bodies> domain.
+
+=cut
