@@ -2,6 +2,33 @@
 
 The following are some of the questions people have asked about how to use the L<SimpleDB::Class>.
 
+=head2 How do I instantiate an item without inserting it into the database?
+
+As you might notice when you call 
+
+ $domain->insert(\%attributes);
+
+it creates the item and inserts it into the database. Sometimes you want to create the item in advance, play around with it, and then decide whether to insert it into the database. This is fairly easy, but not entirely intuitive. Let's assume you have a L<SimpleDB::Class::Item> subclass called C<Book> that you've created. Do the following:
+
+ my $item = Book->new(simpledb=>$simpledb)->update(\%attributes);
+
+or
+
+ my $item = Book->new(simpledb=>$simpledb);
+ $item->some_attribute($value);
+
+Then when you're ready to insert it:
+
+ $item->put;
+
+That's all there is to it. Some people are so used to using
+
+ my $books = $simpledb->domain('books');
+ my $book = $books->find($id);
+ my $book = $books->insert(\%attributes);
+
+that they forget that you can create an object directly using the class.
+
 =head2 How can I store multiple objects in the same domain?
 
 Use L<SimpleDB::Class::Item/"recast_using">. It works like this. First you have a base class like so:
