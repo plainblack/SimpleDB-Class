@@ -98,6 +98,10 @@ It automatically generates UUID based ItemNames (unique IDs) if you don't want t
 
 =item *
 
+It has built in domain prefixing to account for the fact that you can't create multiple SimpleDB instances under the same account.
+
+=item *
+
 It automatically deals with the fact that you might have some attributes in your items that aren't in your L<SimpleDB::Class::Item> subclasses, and creates accessors and mutators for them on the fly at retrieval time. 
 
 =item *

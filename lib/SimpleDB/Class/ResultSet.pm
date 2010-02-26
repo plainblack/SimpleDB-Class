@@ -171,7 +171,7 @@ sub count {
     }
     if ($where) {
         my $clauses = { 
-            'id'    => ['in',@ids], 
+            'itemName()'    => ['in',@ids], 
             '-and'          => $where,
         };
         my $select = SimpleDB::Class::SQL->new(
@@ -209,7 +209,7 @@ sub search {
         push @ids, $item->id;
     }
     my $clauses = { 
-        id      => ['in',@ids], 
+        'itemName()'      => ['in',@ids], 
         '-and'  => $where,
     };
     return $self->new(

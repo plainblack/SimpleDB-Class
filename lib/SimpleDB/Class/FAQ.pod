@@ -2,6 +2,20 @@
 
 The following are some of the questions people have asked about how to use the L<SimpleDB::Class>.
 
+=head2 How do I search by primary key?
+
+In SimpleDB, the primary key (aka C<id> or ItemName) is not actually part of the data stored in the item, so you can't use it in a where clause or order by clause. However, there is a special fucntion called C<itemName()> that allows you to do just that. Assuming you were searching a domain here's what that might look like:
+
+ $books->search({ 'itemName()' => ['in','x','y','z'] });
+
+The above statement says to return any items that have an id of C<x>, C<y>, or C<z>. This can be useful if you just want to retreive a specific set of items in a single request. Or if you actually specifiy the ids at creation time, and have some sort of logic in them, you may be able to do other things.
+
+You can also use it in an order by clause like this:
+
+ $books->search({ color => 'green' }, 'itemName()');
+
+That says return all items where color is green ordered by id. If you're using the auto-generated ids that L<SimpleDB::Class::Item> provides for you, this is a way to produce a semi-random ordered result set. 
+
 =head2 How do I instantiate an item without inserting it into the database?
 
 As you might notice when you call 

@@ -46,6 +46,8 @@ Defaults to '*'. Alternatively you can pass a string of 'count(*)' or an attribu
 
 A hash reference containing a series of clauses. Here are some examples and what the resulting queries would be. You can of course combine all these options to create your own queries.
 
+B<NOTE:> If you want to search on an item's id (or ItemName) then you should use the C<itemName()> function as the id doesn't actually exist in the item's data.
+
 Direct comparison.
 
  { foo => 1 }

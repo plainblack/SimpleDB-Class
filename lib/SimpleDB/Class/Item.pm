@@ -257,7 +257,7 @@ has simpledb => (
 
 =head2 id ( )
 
-Returns the unique id of this item. B<Note:> Even though the primary key C<ItemName> (or C<id> as we call it) is a special property of an item, an C<id> attribute is also automatically added to every item when C<put> is called, which contains the same value as the C<ItemName>. This is so you can perform searches based upon the id, which is not something you can normally do with a C<Select> in SimpleDB.
+Returns the unique id of this item. B<Note:> The primary key C<ItemName> (or C<id> as we call it) is a special property of an item that doesn't exist in it's own data. So if you want to search on the id, you have to use C<itemName()> in your queries as the attribute name.
 
 =cut
 
@@ -286,7 +286,11 @@ sub copy {
     foreach my $name (keys %{$self->attributes}) {
         $properties{$name} = $self->$name;
     }
-    my $new = $self->new(simpledb => $self->simpledb, id=>$id)->update(\%properties)->put;
+    my %params = (simpledb => $self->simpledb);
+    if (defined $id) {
+        $params{id} = $id;
+    }
+    my $new = $self->new(\%params)->update(\%properties)->put;
     return $new;
 }
 
@@ -375,11 +379,6 @@ sub put {
             $i++;
         }
     }
-
-    # add the id, so we can search on it
-    $params->{'Attribute.'.$i.'.Name'} = 'id';
-    $params->{'Attribute.'.$i.'.Replace'} = 'true';
-    $params->{'Attribute.'.$i.'.Value'} = $self->id;
 
     # push changes
     eval{$db->cache->set($domain_name, $self->id, $attributes)};
