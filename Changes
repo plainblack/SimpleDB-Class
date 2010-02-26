@@ -9,7 +9,8 @@
  - Fixed a bug with date strings.
  - Now works with multi-value items by declaring a field to be either Str or ArrayRefOfStr (or any other valid type Int, DateTime, HashRef). This is incompatible with the way that it used to work.
  - Now using MooseX::Types for data validation and coercion. 
- - Applied RFE #54786: SimpleDB::Class::HTTP should use XML::Simple with ForceArray for Item 
+ - Implemented RFE #54786: SimpleDB::Class::HTTP should use XML::Simple with ForceArray for Item 
+ - Implemented RFE #54617: Wishlist: parameterized domain names
 
 0.0802 2010-01-28
  - Fixed a couple problems with calling 'next tokens' on result sets.

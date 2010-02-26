@@ -34,6 +34,10 @@ A hash of options you can pass in to the constructor.
 
 A L<SimpleDB::Class::Item> subclass name. This is required.
 
+=head4 simpledb
+
+A reference to the L<SimpleDB::Class> object. This is required.
+
 =head4 output
 
 Defaults to '*'. Alternatively you can pass a string of 'count(*)' or an attribute. Or you can pass an array ref of attributes.
@@ -131,6 +135,19 @@ Returns what was passed into the constructor for the output field.
 has output => (
     is              => 'ro',
     default         => '*',
+);
+
+#--------------------------------------------------------
+
+=head2 simpledb ()
+
+Returns the reference passed into the constructor.
+
+=cut
+
+has simpledb => (
+    is          => 'ro',
+    required    => 1,
 );
 
 #--------------------------------------------------------
@@ -371,7 +388,7 @@ sub to_sql {
         $limit = ' limit '.$self->limit;
     }
 
-    return 'select '.$output.' from '.$self->quote_attribute($self->item_class->domain_name).$where.$sort.$limit;
+    return 'select '.$output.' from '.$self->quote_attribute($self->simpledb->add_domain_prefix($self->item_class->domain_name)).$where.$sort.$limit;
 }
 
 

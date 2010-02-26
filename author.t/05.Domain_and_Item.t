@@ -11,8 +11,11 @@ unless (defined $access && defined $secret) {
 }
 
 use Foo;
-
-my $foo = Foo->new(secret_key=>$secret, access_key=>$access, cache_servers=>[{host=>'127.0.0.1', port=>11211}]);
+my %params = (secret_key=>$secret, access_key=>$access, cache_servers=>[{host=>'127.0.0.1', port=>11211}]);
+if ($ARGV[0]) {
+    $params{domain_prefix} = $ARGV[0];
+}
+my $foo = Foo->new(%params);
 $foo->cache->flush;
 my $domain = $foo->domain('foo_domain');
 isa_ok($domain,'SimpleDB::Class::Domain');
@@ -20,7 +23,11 @@ isa_ok($domain->simpledb,'SimpleDB::Class');
 
 my $parent = $foo->domain('foo_parent');
 ok($parent->create, 'create a domain');
-ok(grep({$_ eq 'foo_parent'} @{$foo->list_domains}), 'got created domain');
+my $domain_expected = 'foo_parent';
+if ($ARGV[0]) {
+    $domain_expected = $ARGV[0].$domain_expected;
+}
+ok(grep({$_ eq $domain_expected} @{$foo->list_domains}), 'got created domain');
 is($parent->count, 0, 'should be 0 items');
 $parent->insert({title=>'One'},'one');
 $parent->insert({title=>'Two'},'two');

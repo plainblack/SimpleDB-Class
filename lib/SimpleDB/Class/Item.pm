@@ -38,7 +38,7 @@ The domain name to set.
 
 =head2 domain_name ( )
 
-After set_domain_name() has been called, there will be a domain_name method, that will return the value of the domain name.
+Class method. After set_domain_name() has been called, there will be a domain_name method, that will return the value of the domain name.
 
 =cut
 

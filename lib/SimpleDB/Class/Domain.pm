@@ -200,6 +200,7 @@ sub count {
     my ($self, $clauses) = @_;
     my $select = SimpleDB::Class::SQL->new(
         item_class  => $self->item_class,
+        simpledb    => $self->simpledb,
         where       => $clauses,
         output      => 'count(*)',
     );
@@ -234,6 +235,7 @@ sub max {
         $where->{'-and'} = $clauses;
     }
     my $select = SimpleDB::Class::SQL->new(
+        simpledb    => $self->simpledb,
         item_class  => $self->item_class,
         where       => $where,
         limit       => 1,
@@ -272,6 +274,7 @@ sub min {
         $where->{'-and'} = $clauses;
     }
     my $select = SimpleDB::Class::SQL->new(
+        simpledb    => $self->simpledb,
         item_class  => $self->item_class,
         where       => $where,
         limit       => 1,

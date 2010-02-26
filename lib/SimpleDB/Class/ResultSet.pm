@@ -136,6 +136,7 @@ sub fetch_result {
     my ($self) = @_;
     my $select = SimpleDB::Class::SQL->new(
         item_class  => $self->item_class,
+        simpledb    => $self->simpledb,
         where       => $self->where,
     );
     my %params = (SelectExpression => $select->to_sql);
@@ -175,6 +176,7 @@ sub count {
         };
         my $select = SimpleDB::Class::SQL->new(
             item_class  => $self->item_class,
+            simpledb    => $self->simpledb,
             where       => $clauses,
             output      => 'count(*)',
         );
