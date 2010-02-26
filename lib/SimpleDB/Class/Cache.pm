@@ -399,7 +399,7 @@ When an object can't be thawed from cache due to corruption of some sort.
 
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009-2010 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 

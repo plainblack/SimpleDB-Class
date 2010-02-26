@@ -224,7 +224,7 @@ The HTTP headers.
 
 sub handle_response {
     my ($self, $response) = @_;
-    my $content = eval {XML::Simple::XMLin($response->content)};
+    my $content = eval {XML::Simple::XMLin($response->content, ForceArray => ['Item'])};
 
     # choked reconstituing the XML, probably because it wasn't XML
     if ($@) {
@@ -255,7 +255,7 @@ sub handle_response {
 
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009-2010 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 

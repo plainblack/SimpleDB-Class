@@ -1,7 +1,7 @@
 package SimpleDB::Class::Role::Itemized;
 
 use Moose::Role;
-use SimpleDB::Class::SQL;
+use SimpleDB::Class::Types ':all';
 
 requires 'item_class';
 
@@ -131,17 +131,16 @@ sub parse_item {
     my $item_class = $self->determine_item_class($attributes);
 
     # and appropriately format it's attribute values
-    my $select = SimpleDB::Class::SQL->new(item_class=>$item_class); 
     foreach my $name (keys %{$attributes}) {
         if (ref $attributes->{$name} eq 'ARRAY') {
             my $i = 0;
             foreach my $value (@{$attributes->{$name}}) {
-                $attributes->{$name}[$i] = $select->parse_value($name, $value);
+                $attributes->{$name}[$i] = $item_class->parse_value($name, $value);
                 $i++;
             }
         }
         else {
-            $attributes->{$name} = $select->parse_value($name, $attributes->{$name});
+            $attributes->{$name} = $item_class->parse_value($name, $attributes->{$name});
         }
     }
 
@@ -151,7 +150,7 @@ sub parse_item {
 
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009-2010 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 

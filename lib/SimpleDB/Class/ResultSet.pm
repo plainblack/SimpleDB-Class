@@ -170,8 +170,8 @@ sub count {
     }
     if ($where) {
         my $clauses = { 
-            id      => ['in',@ids], 
-            '-and'  => $where,
+            'id'    => ['in',@ids], 
+            '-and'          => $where,
         };
         my $select = SimpleDB::Class::SQL->new(
             item_class  => $self->item_class,
@@ -181,7 +181,7 @@ sub count {
         my $result = $self->simpledb->http->send_request('Select', {
             SelectExpression    => $select->to_sql,
         });
-        return $result->{SelectResult}{Item}{Attribute}{Value};
+        return $result->{SelectResult}{Item}[0]{Attribute}{Value};
     }
     else {
         return scalar @ids;
@@ -263,7 +263,7 @@ sub next {
     my ($self) = @_;
     # get the current results
     my $result = ($self->has_result) ? $self->result : $self->fetch_result;
-    my $items = (ref $result->{SelectResult}{Item} eq 'ARRAY') ? $result->{SelectResult}{Item} : [$result->{SelectResult}{Item}];
+    my $items = $result->{SelectResult}{Item};
     my $num_items = scalar @{$items};
     return undef unless $num_items > 0;
 
@@ -287,15 +287,17 @@ sub next {
     $self->iterator($iterator);
 
     # make the item object
-    my $cache = $self->simpledb->cache;
+    my $db = $self->simpledb;
+    my $domain_name = $db->add_domain_prefix($self->item_class->domain_name);
+    my $cache = $db->cache;
     ## fetch from cache even though we've already pulled it back from the db, because the one in cache
     ## might be more up to date than the one from the DB
-    my $attributes = eval{$cache->get($self->item_class->domain_name, $item->{Name})}; 
+    my $attributes = eval{$cache->get($domain_name, $item->{Name})}; 
     my $e;
     if ($e = SimpleDB::Class::Exception::ObjectNotFound->caught) {
         my $itemobj = $self->parse_item($item->{Name}, $item->{Attribute});
         if (defined $itemobj) {
-            eval{$cache->set($self->item_class->domain_name, $item->{Name}, $itemobj->to_hashref)};
+            eval{$cache->set($domain_name, $item->{Name}, $itemobj->to_hashref)};
         }
         return $itemobj;
     }
@@ -313,7 +315,7 @@ sub next {
 
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009-2010 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 

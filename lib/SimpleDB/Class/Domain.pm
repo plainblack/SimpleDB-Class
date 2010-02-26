@@ -96,8 +96,9 @@ Creates this domain in the SimpleDB.
 
 sub create {
     my ($self) = @_;
-    $self->simpledb->http->send_request('CreateDomain', {
-        DomainName => $self->name,
+    my $db = $self->simpledb;
+    $db->http->send_request('CreateDomain', {
+        DomainName => $db->add_domain_prefix($self->name),
     });
 }
 
@@ -111,8 +112,9 @@ Deletes this domain from the SimpleDB.
 
 sub delete {
     my ($self) = @_;
-    $self->simpledb->http->send_request('DeleteDomain', {
-        DomainName => $self->name,
+    my $db = $self->simpledb;
+    $db->http->send_request('DeleteDomain', {
+        DomainName => $db->add_domain_prefix($self->name),
     });
 }
 
@@ -131,17 +133,19 @@ The unique identifier (called ItemName in AWS documentation) of the item to retr
 sub find {
     my ($self, $id) = @_;
     SimpleDB::Class::Exception::InvalidParam->throw(name=>'id', value=>undef) unless defined $id;
-    my $cache = $self->simpledb->cache;
-    my $attributes = eval{$cache->get($self->name, $id)};
+    my $db = $self->simpledb;
+    my $cache = $db->cache;
+    my $name = $db->add_domain_prefix($self->name);
+    my $attributes = eval{$cache->get($name, $id)};
     my $e;
     if (SimpleDB::Class::Exception::ObjectNotFound->caught) {
-        my $result = $self->simpledb->http->send_request('GetAttributes', {
+        my $result = $db->http->send_request('GetAttributes', {
             ItemName    => $id,
-            DomainName  => $self->name,
+            DomainName  => $name,
         });
         my $item = $self->parse_item($id, $result->{GetAttributesResult}{Attribute});
         if (defined $item) {
-            $cache->set($self->name, $id, $item->to_hashref);
+            $cache->set($name, $id, $item->to_hashref);
         }
         return $item;
     }
@@ -202,7 +206,7 @@ sub count {
     my $result = $self->simpledb->http->send_request('Select', {
         SelectExpression    => $select->to_sql,
     });
-    return $result->{SelectResult}{Item}{Attribute}{Value};
+    return $result->{SelectResult}{Item}[0]{Attribute}{Value};
 }
 
 #--------------------------------------------------------
@@ -239,8 +243,8 @@ sub max {
     my $result = $self->simpledb->http->send_request('Select', {
         SelectExpression    => $select->to_sql,
     });
-    my $value = $result->{SelectResult}{Item}{Attribute}{Value};
-    return $select->parse_value($attribute, $value);
+    my $value = $result->{SelectResult}{Item}[0]{Attribute}{Value};
+    return $self->item_class->parse_value($attribute, $value);
 }
 
 #--------------------------------------------------------
@@ -277,8 +281,8 @@ sub min {
     my $result = $self->simpledb->http->send_request('Select', {
         SelectExpression    => $select->to_sql,
     });
-    my $value = $result->{SelectResult}{Item}{Attribute}{Value};
-    return $select->parse_value($attribute, $value);
+    my $value = $result->{SelectResult}{Item}[0]{Attribute}{Value};
+    return $self->item_class->parse_value($attribute, $value);
 }
 
 #--------------------------------------------------------
@@ -316,7 +320,7 @@ sub search {
 
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009-2010 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 

@@ -1,7 +1,15 @@
-0.0900 2010-02-24
+1.0000 2010-02-24
  - Enabled keep alives, which speeds up requests. 
  - Added an FAQ.
  - Quoting doesn't quote itemName().
+ - Fixed the copy() method.
+ - Fixed broken documentation on the new() method in SimpleDB::Class::Item.
+ - Now using Moose attributes for SimpleDB attributes created by the add_attributes() method in SimpleDB::Class::Item. Thanks to Paul Driver for his help in this.
+ - belongs_to generated methods now return undef rather than dying if the associated attribute has no value.
+ - Fixed a bug with date strings.
+ - Now works with multi-value items by declaring a field to be either Str or ArrayRefOfStr (or any other valid type Int, DateTime, HashRef). This is incompatible with the way that it used to work.
+ - Now using MooseX::Types for data validation and coercion. 
+ - Applied RFE #54786: SimpleDB::Class::HTTP should use XML::Simple with ForceArray for Item 
 
 0.0802 2010-01-28
  - Fixed a couple problems with calling 'next tokens' on result sets.

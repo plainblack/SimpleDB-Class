@@ -163,6 +163,10 @@ An array reference of cache servers. See L<SimpleDB::Class::Cache> for details.
 
 An optional L<URI> object to connect to an alternate SimpleDB server. See also L<SimpleDB::Class::HTTP/"simpledb_uri">.
 
+=head4 domain_prefix
+
+An optional string that is prepended to all domain names wherever they are used in the system.
+
 =cut
 
 #--------------------------------------------------------
@@ -262,6 +266,47 @@ has simpledb_uri => (
 
 #--------------------------------------------------------
 
+=head2 domain_prefix ( )
+
+Returns the value passed into the constructor.
+
+=head2 has_domain_prefix ( )
+
+Returns a boolean indicating whether the user has specified a domain_prefix.
+
+=cut
+
+has domain_prefix => (
+    is          => 'ro',
+    predicate   => 'has_domain_prefix',
+    default     => undef,
+);
+
+#--------------------------------------------------------
+
+=head2 add_domain_prefix ( domain ) 
+
+If the domain_prefix is set, this method will apply it do a passed in domain name. If it's not, it will simply return the domain anme as is.
+
+B<NOTE:> This is used mostly internally to SimpleDB::Class, so unless you're extending SimpleDB::Class itself, rather than just using it, you don't have to use this method.
+
+=head3 domain
+
+The domain to apply the prefix to.
+
+=cut
+
+sub add_domain_prefix {
+    my ($self, $domain) = @_;
+    if ($self->has_domain_prefix) {
+        return $self->domain_prefix . $domain;
+    }
+    return $domain;
+}
+
+
+#--------------------------------------------------------
+
 =head2 http ( )
 
 Returns the L<SimpleDB::Class::HTTP> instance used to connect to the SimpleDB service.
@@ -338,12 +383,14 @@ This package requires the following modules:
 
 L<XML::Simple>
 L<LWP>
+L<JSON>
 L<TimeHiRes>
 L<Crypt::SSLeay>
 L<Sub::Name>
 L<DateTime>
 L<DateTime::Format::Strptime>
 L<Moose>
+L<MooseX::Types>
 L<MooseX::ClassAttribute>
 L<Digest::SHA>
 L<URI>
@@ -419,7 +466,7 @@ I have to give credit where credit is due: SimpleDB::Class is heavily inspired b
 
 =head1 LEGAL
 
-SimpleDB::Class is Copyright 2009 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
+SimpleDB::Class is Copyright 2009-2010 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.
 
 =cut
 

@@ -1,4 +1,4 @@
-use Test::More tests => 36;
+use Test::More tests => 30;
 use Test::Deep;
 use Tie::IxHash;
 use lib ('../lib', 'lib');
@@ -30,16 +30,10 @@ is($select->to_sql, 'select * from `foo_domain`', "simple query");
 
 is($select->quote_attribute("this"), q{`this`}, "quote attribute");
 is($select->quote_attribute("itemName()"), q{itemName()}, "don't escape itemName() as attribute");
-is($select->quote_value("itemName()"), q{itemName()}, "don't escape itemName() as value");
 is($select->quote_value("this that"), q{'this that'}, "no escape");
 is($select->quote_value("this 'that'"), q{'this ''that'''}, "hq escape");
 is($select->quote_value(q{this "that"}), q{'this ""that""'}, "quote escape");
 is($select->quote_value(q{this "'that'"}), q{'this ""''that''""'}, "both escape");
-is($select->format_value('unknown', 'that'), q{'that'}, "format a string");
-is($select->format_int(45), q{000001000000045}, "format a number");
-is($select->parse_int(q{000001000000045}), 45, "format a number");
-is($select->format_hashref({this=>'that'}), '{"this":"that"}', 'format_hashref');
-cmp_deeply($select->parse_hashref('{"this":"that"}'), {this=>'that'}, 'format_hashref');
 
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
@@ -149,7 +143,7 @@ $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { '-intersection' => \%intersection},
     );
-is($select->to_sql, "select * from `foo_domain` where (`color` = '2' intersection `size` = 'this')", "query with or where");
+is($select->to_sql, "select * from `foo_domain` where (`color` = '2' intersection `size` = 'this')", "query with intersection where");
 
 tie my %or, 'Tie::IxHash', color=>2, size=>'this';
 $select = SimpleDB::Class::SQL->new(
@@ -158,13 +152,13 @@ $select = SimpleDB::Class::SQL->new(
     );
 is($select->to_sql, "select * from `foo_domain` where (`color` = '2' or `size` = 'this')", "query with or where");
 
-tie my %and, 'Tie::IxHash', size=>'this', that=>1;
+tie my %and, 'Tie::IxHash', size=>'this', quantity=>1;
 tie my %or, 'Tie::IxHash', color=>2, '-and'=>\%and;
 $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { '-or' => \%or},
     );
-is($select->to_sql, "select * from `foo_domain` where (`color` = '2' or (`size` = 'this' and `that` = '1'))", "query with or where");
+is($select->to_sql, "select * from `foo_domain` where (`color` = '2' or (`size` = 'this' and `quantity` = '000001000000001'))", "query with or/and where");
 
 tie my %where, 'Tie::IxHash', color=>2, size=>'this';
 $select = SimpleDB::Class::SQL->new(

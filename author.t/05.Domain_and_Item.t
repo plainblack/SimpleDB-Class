@@ -37,10 +37,12 @@ isa_ok($x, 'Foo::Domain');
 cmp_deeply($x->to_hashref, {properties=>{this=>'that'}, color=>'orange',size=>'large',size_formatted=>'Large',parentId=>'one', start_date=>undef, quantity=>3}, 'to_hashref()');
 $domain->insert({color=>'green',size=>'small',parentId=>'two',quantity=>11});
 $domain->insert({color=>'black',size=>'huge',parentId=>'one',quantity=>2});
+sleep 1;
 is($domain->max('quantity'), 11, 'max');
 is($domain->min('quantity'), 1, 'min');
 is($domain->max('quantity',{parentId=>'one'}), 5, 'max with clause');
 is($domain->min('quantity',{parentId=>'one'}), 2, 'min with clause');
+
 my $foos = $domain->search({size=>'small'});
 isa_ok($foos, 'SimpleDB::Class::ResultSet');
 isa_ok($foos->next, 'Foo::Domain');
