@@ -1,4 +1,4 @@
-use Test::More tests => 19;
+use Test::More tests => 21;
 use Test::Deep;
 use lib '../lib';
 
@@ -20,7 +20,7 @@ use_ok( 'SimpleDB::Class::Item' );
 SimpleDB::Class::Item->set_domain_name('test');
 
 my %attributes = (
-    'xxx'=>{ isa => 'Str'},
+    'xxx'=>{ isa => 'Str', trigger=>sub { my $self = shift; $self->foo('xxx')} },
     'foo'=> { isa => 'Str', default=>'abc'}, 
     'bar'=>{ isa => 'Int', default=>24}, 
     );
@@ -42,6 +42,9 @@ isa_ok($item, 'SimpleDB::Class::Item');
 ok($item->can('foo'), 'attributes create accessors');
 $item->foo('11');
 is($item->foo, 11, 'can set added accessor');
+is($item->bar, 24, 'defaults on attributes work');
+$item->xxx('blah');
+is($item->foo, 'xxx', 'triggers on attributes work');
 
 SimpleDB::Class::Item->has_many('many', 'XXX', 'x');
 ok($item->can('many'), 'has_many creates a method');
