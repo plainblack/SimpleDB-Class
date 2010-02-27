@@ -140,6 +140,8 @@ B<Note:> The generated method will return C<undef> if the attribute specified ha
 
 The method name to create to represent this relationship in this class.
 
+B<NOTE:> A C<clear_*()> method will be created as well, which will uncache the result. This method will be automatically called if a new value is set for the attribute.
+
 =head3 class
 
 The class name of the parent class you're relating this class to.
@@ -150,15 +152,27 @@ The attribute in this class' attribute list that represents the id of the parent
 
 =cut
 
+
 sub belongs_to {
     my ($class, $name, $classname, $attribute) = @_;
-    my $sub = sub { 
-        my $self = shift; 
-        my $id = $self->$attribute;
-        return undef unless ($id ne '');
-        return $self->simpledb->domain($classname)->find($id); 
-    };
-    _install_sub($class.'::'.$name, $sub);
+    my $clearer = 'clear_'.$name;
+    $class->meta->add_attribute($name, {
+        is      => 'rw',
+        lazy    => 1,
+        default => sub {
+                my $self = shift;
+                my $id = $self->$attribute;
+                return undef unless ($id ne '');
+                $self->simpledb->domain($classname)->find($id);
+            },
+        clearer => $clearer,
+        });
+    $class->meta->add_after_method_modifier($attribute, sub {
+        my ($self, $value) = @_;
+        if (defined $value) {
+            $self->$clearer;
+        }
+    });
 };
 
 #--------------------------------------------------------

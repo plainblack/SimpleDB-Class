@@ -1,4 +1,4 @@
-use Test::More tests => 39;
+use Test::More tests => 40;
 use Test::Deep;
 use lib ('../lib', 'lib');
 $|=1;
@@ -79,7 +79,10 @@ isa_ok($child, 'Foo::Child');
 my $subchild = $children->insert({domainId=>'largered', class=>'Foo::SubChild'});
 isa_ok($subchild, 'Foo::SubChild');
 
-is($domain->find('largered')->parent->title, 'One', 'belongs_to works');
+my $largered = $domain->find('largered');
+is($largered->parent->title, 'One', 'belongs_to works');
+$largered->parentId('two');
+is($largered->parent->title, 'Two', 'belongs to clear works');
 is($domain->find('largered')->children->next->domainId, 'largered', 'has_many works');
 
 my $j = $domain->insert({start_date=>DateTime->new(year=>2000, month=>5, day=>5, hour=>5, minute=>5, second=>5), color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'},quantity=>3});
