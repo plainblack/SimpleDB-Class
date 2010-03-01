@@ -49,7 +49,7 @@ is($item->foo, 'xxx', 'triggers on attributes work');
 SimpleDB::Class::Item->has_many('many', 'XXX', 'x');
 ok($item->can('many'), 'has_many creates a method');
 
-SimpleDB::Class::Item->belongs_to('belongs', 'XXX', 'x');
+SimpleDB::Class::Item->belongs_to('belongs', 'XXX', 'foo');
 ok($item->can('belongs'), 'belongs_to creates a method');
 
 

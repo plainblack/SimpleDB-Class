@@ -17,6 +17,8 @@ __PACKAGE__->add_attributes(
     quantity        =>{isa=>'Int'},
     properties      =>{isa=>'HashRef'},
     start_date      =>{isa=>'DateTime'},
+    notes           =>{isa=>'MediumStr'},
+    components      =>{isa=>'ArrayRefOfStr'},
     );
 __PACKAGE__->has_many('children', 'Foo::Child', 'domainId');
 __PACKAGE__->belongs_to('parent', 'Foo::Parent', 'parentId');

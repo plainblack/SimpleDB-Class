@@ -1,4 +1,4 @@
-use Test::More tests => 40;
+use Test::More tests => 43;
 use Test::Deep;
 use lib ('../lib', 'lib');
 $|=1;
@@ -40,7 +40,7 @@ is($domain->find('largered')->size, 'large', 'find() works');
 
 my $x = $domain->insert({color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'},quantity=>3});
 isa_ok($x, 'Foo::Domain');
-cmp_deeply($x->to_hashref, {properties=>{this=>'that'}, color=>'orange',size=>'large',size_formatted=>'Large',parentId=>'one', start_date=>ignore(), quantity=>3}, 'to_hashref()');
+cmp_deeply($x->to_hashref, {properties=>{this=>'that'}, color=>'orange',size=>'large',size_formatted=>'Large',parentId=>'one', start_date=>ignore(), components=>[], notes=>'', quantity=>3}, 'to_hashref()');
 $domain->insert({color=>'green',size=>'small',parentId=>'two',quantity=>11});
 $domain->insert({color=>'black',size=>'huge',parentId=>'one',quantity=>2});
 is($domain->max('quantity', consistent=>1), 11, 'max');
@@ -60,9 +60,7 @@ my $b_domain = $foos->next;
 is($b_domain->id, $a_domain->id, "searching on itemName() works");
 $foos = $domain->search(where=>{size=>'small'}, consistent=>1, order_by=>'itemName()');
 $a_domain = $foos->next;
-print $a_domain->id."\n";
 $b_domain = $foos->next;
-print $b_domain->id."\n";
 ok($a_domain->id < $b_domain->id, 'order by itemName() works');
 my $c_domain = $b_domain->copy;
 is($b_domain->size, $c_domain->size, "copy() works.");
@@ -85,7 +83,21 @@ $largered->parentId('two');
 is($largered->parent->title, 'Two', 'belongs to clear works');
 is($domain->find('largered')->children->next->domainId, 'largered', 'has_many works');
 
-my $j = $domain->insert({start_date=>DateTime->new(year=>2000, month=>5, day=>5, hour=>5, minute=>5, second=>5), color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'},quantity=>3});
+my $note = 'NOTE: 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
+';
+
+my $j = $domain->insert({start_date=>DateTime->new(year=>2000, month=>5, day=>5, hour=>5, minute=>5, second=>5), color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'},quantity=>3, notes=>$note, components=>['cotton','dye','thread']});
 my $j1 = $domain->find($j->id);
 cmp_ok($j->start_date, '==', $j1->start_date, 'dates in are dates out');
 is($j->start_date->year, 2000, 'year');
@@ -94,6 +106,9 @@ is($j->start_date->day, 5, 'day');
 is($j->start_date->hour, 5, 'hour');
 is($j->start_date->minute, 5, 'minute');
 is($j->start_date->second, 5, 'second');
+is($j1->properties->{this}, 'that', 'hash refs work');
+is($j1->notes, $note, 'medium strings work');
+is($j1->components->[1], 'dye', 'arrays of strings work');
 
 ok($domain->delete,'deleting domain');
 $parent->delete;
