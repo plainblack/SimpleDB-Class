@@ -390,6 +390,7 @@ sub to_sql {
         $limit = ' limit '.$self->limit;
     }
 
+    print 'select '.$output.' from '.$self->quote_attribute($self->simpledb->add_domain_prefix($self->item_class->domain_name)).$where.$sort.$limit."\n";
     return 'select '.$output.' from '.$self->quote_attribute($self->simpledb->add_domain_prefix($self->item_class->domain_name)).$where.$sort.$limit;
 }
 

@@ -47,6 +47,10 @@ A result as returned from the send_request() method from L<SimpleDB::Class::HTTP
 
 A where clause as defined in L<SimpleDB::Class::SQL>. Either this or a result is required.
 
+=head4 consistent
+
+A boolean that if set true will get around Eventual Consistency, but at a reduced performance.
+
 =cut
 
 #--------------------------------------------------------
@@ -63,6 +67,19 @@ has item_class => (
 );
 
 with 'SimpleDB::Class::Role::Itemized';
+
+#--------------------------------------------------------
+
+=head2 consistent ( )
+
+Returns the consistent value passed into the constructor.
+
+=cut
+
+has consistent => (
+    is      => 'ro',
+    default => 0,
+);
 
 #--------------------------------------------------------
 
@@ -140,6 +157,9 @@ sub fetch_result {
         where       => $self->where,
     );
     my %params = (SelectExpression => $select->to_sql);
+    if ($self->consistent) {
+        $params{ConsistentRead} = 'true';
+    }
 
     # if we're fetching and we already have a result, we can assume we're getting the next batch
     if ($self->has_result) { 
@@ -153,26 +173,30 @@ sub fetch_result {
 
 #--------------------------------------------------------
 
-=head2 count ( [ where ] )
+=head2 count (  [ options ]  )
 
 Counts the items in the result set. Returns an integer. 
 
-=head3 where
+=head3 options
+
+A hash of extra options you can pass to modify the count.
+
+=head4 where
 
 A where clause as defined by L<SimpleDB::Class::SQL>. If this is specified, then an additional query is executed before counting the items in the result set.
 
 =cut
 
 sub count {
-    my ($self, $where) = @_;
+    my ($self, %options) = @_;
     my @ids;
     while (my $item = $self->next) {
         push @ids, $item->id;
     }
-    if ($where) {
+    if ($options{where}) {
         my $clauses = { 
             'itemName()'    => ['in',@ids], 
-            '-and'          => $where,
+            '-and'          => $options{where},
         };
         my $select = SimpleDB::Class::SQL->new(
             item_class  => $self->item_class,
@@ -180,9 +204,11 @@ sub count {
             where       => $clauses,
             output      => 'count(*)',
         );
-        my $result = $self->simpledb->http->send_request('Select', {
-            SelectExpression    => $select->to_sql,
-        });
+        my %params = ( SelectExpression    => $select->to_sql );
+        if ($self->consistent) {
+            $params{ConsistentRead} = 'true';
+        }
+        my $result = $self->simpledb->http->send_request('Select', \%params);
         return $result->{SelectResult}{Item}[0]{Attribute}{Value};
     }
     else {
@@ -192,30 +218,35 @@ sub count {
 
 #--------------------------------------------------------
 
-=head2 search ( where )
+=head2 search ( options )
 
 Just like L<SimpleDB::Class::Domain/"search">, but searches within the confines of the current result set, and then returns a new result set.
 
-=head3 where
+=head3 options
+
+A hash of extra options to modify the search.
+
+=head4 where
 
 A where clause as defined by L<SimpleDB::Class::SQL>.
 
 =cut
 
 sub search {
-    my ($self, $where) = @_;
+    my ($self, %options) = @_;
     my @ids;
     while (my $item = $self->next) {
         push @ids, $item->id;
     }
     my $clauses = { 
         'itemName()'      => ['in',@ids], 
-        '-and'  => $where,
+        '-and'  => $options{where},
     };
     return $self->new(
         simpledb    => $self->simpledb,
         item_class  => $self->item_class,
         where       => $clauses,
+        consistent  => $self->consistent,
         );
 }
 
@@ -266,6 +297,7 @@ sub next {
     # get the current results
     my $result = ($self->has_result) ? $self->result : $self->fetch_result;
     my $items = $result->{SelectResult}{Item};
+    return undef unless defined $items;
     my $num_items = scalar @{$items};
     return undef unless $num_items > 0;
 

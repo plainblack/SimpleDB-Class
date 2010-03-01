@@ -88,7 +88,7 @@ has simpledb => (
 
 #--------------------------------------------------------
 
-=head2 create 
+=head2 create  ( )
 
 Creates this domain in the SimpleDB.
 
@@ -104,7 +104,7 @@ sub create {
 
 #--------------------------------------------------------
 
-=head2 delete
+=head2 delete ( )
 
 Deletes this domain from the SimpleDB.
 
@@ -120,7 +120,7 @@ sub delete {
 
 #--------------------------------------------------------
 
-=head2 find ( id )
+=head2 find ( id, [ options ] )
 
 Retrieves an item from the SimpleDB by ID and then returns a L<SimpleDB::Class::Item> object.
 
@@ -128,10 +128,18 @@ Retrieves an item from the SimpleDB by ID and then returns a L<SimpleDB::Class::
 
 The unique identifier (called ItemName in AWS documentation) of the item to retrieve.
 
+=head3 options
+
+A hash which allows options to modify the retrieval. 
+
+=head4 consistent
+
+A boolean that if set true will get around Eventual Consistency, but at a reduced performance. Note that since L<SimpleDB::Class> fetches requests by id (like this one) directly from memcached, this option should never be needed. It is provided only for completeness. 
+
 =cut
 
 sub find {
-    my ($self, $id) = @_;
+    my ($self, $id, %options) = @_;
     SimpleDB::Class::Exception::InvalidParam->throw(name=>'id', value=>undef) unless defined $id;
     my $db = $self->simpledb;
     my $cache = $db->cache;
@@ -139,10 +147,14 @@ sub find {
     my $attributes = eval{$cache->get($name, $id)};
     my $e;
     if (SimpleDB::Class::Exception::ObjectNotFound->caught) {
-        my $result = $db->http->send_request('GetAttributes', {
+        my %params = ( 
             ItemName    => $id,
             DomainName  => $name,
-        });
+        );
+        if ($options{consistent}) {
+            $params{ConsistentRead} = 'true';
+        }
+        my $result = $db->http->send_request('GetAttributes', \%params);
         my $item = $self->parse_item($id, $result->{GetAttributesResult}{Attribute});
         if (defined $item) {
             $cache->set($name, $id, $item->to_hashref);
@@ -163,7 +175,7 @@ sub find {
 
 #--------------------------------------------------------
 
-=head2 insert ( attributes, [ id ] ) 
+=head2 insert ( attributes, [ options ] ) 
 
 Adds a new item to this domain.
 
@@ -171,68 +183,92 @@ Adds a new item to this domain.
 
 A hash reference of name value pairs to insert as attributes into this item.
 
-=head3 id
+=head3 options
+
+A hash of extra options to modify the put.
+
+=head4 id
 
 Optionally specify a unqiue id for this item.
 
 =cut
 
 sub insert {
-    my ($self, $attributes, $id) = @_;
-    return $self->instantiate_item($attributes, $id)->put;
+    my ($self, $attributes, %options) = @_;
+    return $self->instantiate_item($attributes, $options{id})->put;
 }
 
 #--------------------------------------------------------
 
-=head2 count ( [ where ] ) 
+=head2 count ( [ options ] ) 
 
 Returns an integer indicating how many items are in this domain.
 
 WARNING: With this method you need to be aware that SimpleDB is eventually consistent. See L<SimpleDB::Class/"Eventual Consistency"> for details.
 
-=head3 where
+=head3 options
+
+A hash containing options to modify the count.
+
+=head4 where
 
 A where clause as defined in L<SimpleDB::Class::SQL> if you want to count only a certain number of items in the domain.
+
+=head4 consistent
+
+A boolean that if set true will get around Eventual Consistency, but at a reduced performance.
 
 =cut
 
 sub count {
-    my ($self, $clauses) = @_;
+    my ($self, %options) = @_;
     my $select = SimpleDB::Class::SQL->new(
         item_class  => $self->item_class,
         simpledb    => $self->simpledb,
-        where       => $clauses,
+        where       => $options{where},
         output      => 'count(*)',
     );
-    my $result = $self->simpledb->http->send_request('Select', {
-        SelectExpression    => $select->to_sql,
-    });
+    my %params = ( SelectExpression    => $select->to_sql );
+    if ($options{consistent}) {
+        $params{ConsistentRead} = 'true';
+    }
+    my $result = $self->simpledb->http->send_request('Select', \%params);
     return $result->{SelectResult}{Item}[0]{Attribute}{Value};
 }
 
 #--------------------------------------------------------
 
-=head2 max ( attribute, [ where ] )
+=head2 max ( attribute, [ options ] )
 
 Returns the maximum value of an attribute.
+
+WARNING: With this method you need to be aware that SimpleDB is eventually consistent. See L<SimpleDB::Class/"Eventual Consistency"> for details.
 
 =head3 attribute
 
 The name of the attribute to find the maximum value of.
 
-=head3 where
+=head3 options
+
+A hash of options to modify the search.
+
+=head4 where
 
 A where clause as defined by L<SimpleDB::Class::SQL>. An optional clause to limit the range of the maximum value.
+
+=head4 consistent
+
+A boolean that if set true will get around Eventual Consistency, but at a reduced performance.
 
 =cut
 
 sub max {
-    my ($self, $attribute, $clauses) = @_;
+    my ($self, $attribute, %options) = @_;
     my $where = {
         $attribute => ['!=','-1000001'],
     };
-    if (ref $clauses eq 'HASH') {
-        $where->{'-and'} = $clauses;
+    if (ref $options{where} eq 'HASH') {
+        $where->{'-and'} = $options{where};
     }
     my $select = SimpleDB::Class::SQL->new(
         simpledb    => $self->simpledb,
@@ -242,36 +278,48 @@ sub max {
         order_by    => [$attribute],
         output      => $attribute,
     );
-    my $result = $self->simpledb->http->send_request('Select', {
-        SelectExpression    => $select->to_sql,
-    });
+    my %params = ( SelectExpression    => $select->to_sql );
+    if ($options{consistent}) {
+        $params{ConsistentRead} = 'true';
+    }
+    my $result = $self->simpledb->http->send_request('Select', \%params);
     my $value = $result->{SelectResult}{Item}[0]{Attribute}{Value};
     return $self->item_class->parse_value($attribute, $value);
 }
 
 #--------------------------------------------------------
 
-=head2 min ( attribute, [ where ] )
+=head2 min ( attribute, [ options ] )
 
 Returns the minimum value of an attribute.
+
+WARNING: With this method you need to be aware that SimpleDB is eventually consistent. See L<SimpleDB::Class/"Eventual Consistency"> for details.
 
 =head3 attribute
 
 The name of the attribute to find the minimum value of.
 
-=head3 where
+=head3 options
+
+A hash of extra options to modify the search.
+
+=head4 where
 
 A where clause as defined by L<SimpleDB::Class::SQL>. An optional clause to limit the range of the minimum value.
+
+=head4 consistent
+
+A boolean that if set true will get around Eventual Consistency, but at a reduced performance.
 
 =cut
 
 sub min {
-    my ($self, $attribute, $clauses) = @_;
+    my ($self, $attribute, %options) = @_;
     my $where = {
         $attribute => ['!=','-1000001'],
     };
-    if (ref $clauses eq 'HASH') {
-        $where->{'-and'} = $clauses;
+    if (ref $options{where} eq 'HASH') {
+        $where->{'-and'} = $options{where};
     }
     my $select = SimpleDB::Class::SQL->new(
         simpledb    => $self->simpledb,
@@ -281,43 +329,54 @@ sub min {
         order_by    => $attribute,
         output      => $attribute,
     );
-    my $result = $self->simpledb->http->send_request('Select', {
-        SelectExpression    => $select->to_sql,
-    });
+    my %params = ( SelectExpression    => $select->to_sql );
+    if ($options{consistent}) {
+        $params{ConsistentRead} = 'true';
+    }
+    my $result = $self->simpledb->http->send_request('Select', \%params);
     my $value = $result->{SelectResult}{Item}[0]{Attribute}{Value};
     return $self->item_class->parse_value($attribute, $value);
 }
 
 #--------------------------------------------------------
 
-=head2 search ( where, [ order_by, limit ] )
+=head2 search ( options )
 
 Returns a L<SimpleDB::Class::ResultSet> object. 
 
 WARNING: With this method you need to be aware that SimpleDB is eventually consistent. See L<SimpleDB::Class/"Eventual Consistency"> for details.
 
-=head3 where
+=head3 options
+
+A hash of options to set up the search.
+
+=head4 where
 
 A where clause as defined by L<SimpleDB::Class::SQL>.
 
-=head3 order_by
+=head4 order_by
 
 An order by clause as defined by L<SimpleDB::Class::SQL>.
 
-=head3 limit
+=head4 limit
 
 A limit clause as defined by L<SimpleDB::Class::SQL>.
+
+=head4 consistent
+
+A boolean that if set true will get around Eventual Consistency, but at a reduced performance.
 
 =cut
 
 sub search {
-    my ($self, $where, $order_by, $limit) = @_;
+    my ($self, %options) = @_;
     return SimpleDB::Class::ResultSet->new(
         simpledb    => $self->simpledb,
         item_class  => $self->item_class,
-        where       => $where,
-        order_by    => $order_by,
-        limit       => $limit,
+        where       => $options{where},
+        order_by    => $options{order_by},
+        limit       => $options{limit},
+        consistent  => $options{consistent},
         );
 }
 

@@ -55,7 +55,7 @@ SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB serv
  my $specific_book = $library->domain('book')->find('id goes here');
 
  my $books = $library->domain('publisher')->find($id)->books;
- my $books = $library->domain('book')->search({publish_date => ['between', DateTime->new(year=>2001), DateTime->new(year=>2003)]});
+ my $books = $library->domain('book')->search( where => {publish_date => ['between', DateTime->new(year=>2001), DateTime->new(year=>2003)]} );
  while (my $book = $books->next) {
     say $book->title;
  }
@@ -82,7 +82,7 @@ It automatically formats dates and integers for sortability in SimpleDB.
 
 =item *
 
-It automatically casts date fields as DateTime objects. 
+It automatically casts date fields as L<DateTime> objects. 
 
 =item *
 
@@ -125,6 +125,8 @@ It lets you search within a subset of a domain, by letting you do a secondary C<
 =head2 Eventual Consistency
 
 SimpleDB is eventually consistent, which means that if you do a write, and then read directly after the write you may not get what you just wrote. L<SimpleDB::Class> gets around this problem for the post part because it caches all L<SimpleDB::Class::Item>s in memcached. That is to say that if an object can be read from cache, it will be. The one area where this falls short are some methods in L<SimpleDB::Class::Domain> and L<SimpleDB::Class::ResultSet> that perform searches on the database which look up items based upon their attributes rather than based upon id. Even in those cases, once an object is located we try to pull it from cache rather than using the data SimpleDB gave us, simply because the cache may be more current. However, a search result may return too few (inserts pending) or too many (deletes pending) results in L<SimpleDB::Class::ResultSet>, or it may return an object which no longer fits certain criteria that you just searched for (updates pending). As long as you're aware of it, and write your programs accordingly, there shouldn't be a problem.
+
+At the end of February 2010 Amazon added a C<ConsistentRead> option to SimpleDB, which means you don't have to care about eventual consistency if you wish to sacrifice some performance. We have exposed this as an option for you to turn on in the methods like C<search> in L<SimpleDB::Class::Domain> where you have to be concerned about eventual consistency. 
 
 Does all this mean that this module makes SimpleDB as ACID compliant as a traditional RDBMS? No it does not. There are still no locks on domains (think tables), or items (think rows). So you probably shouldn't be storing sensitive financial transactions in this. We just provide an easy to use API that will allow you to more easily and a little more safely take advantage of Amazon's excellent SimpleDB service for things like storing logs, metadata, and game data.
 

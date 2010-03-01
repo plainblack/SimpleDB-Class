@@ -68,7 +68,7 @@ The attribute name is key in the hashref.
 
 =head4 isa
 
-The type of data represented by this attribute. Defaults to 'Str' if left out. Options are 'Str', 'Int', 'HashRef', and 'DateTime' for individual values, or if you want to treat the field as a multi-value then 'ArrayRefOfStr', 'ArrayRefOfInt', 'ArrayRefOfHashRef', or 'ArrayRefOfDateTime'.
+The type of data represented by this attribute. See L<SimpleDB::Class::Types> for the available types.
 
 =head4 default
 
@@ -82,14 +82,24 @@ A sub reference that will be called like a method (has reference to $self), and 
 
 sub add_attributes {
     my ($class, %attributes) = @_;
+    my %defaults = (
+        Str                 => '',
+        DateTime            => sub { DateTime->now() },
+        Int                 => 0,
+        ArrayRefOfInt       => sub { [] },
+        ArrayRefOfStr       => sub { [] },
+        ArrayRefOfDateTime  => sub { [] },
+        HashRef             => sub { {} },
+        MediumStr           => '',
+        );
     foreach my $name (keys %attributes) {
-        my $isa = $attributes{$name}{isa} || 'Str';
-        $isa = 'SimpleDB::Class::Types::Sdb'.$isa;
+        my $type = $attributes{$name}{isa} || 'Str';
+        my $isa = 'SimpleDB::Class::Types::Sdb'.$type;
         my %properties = (
             is      => 'rw',
             isa     => $isa,
             coerce  => 1,
-            default => $attributes{$name}{default} || undef,
+            default => $attributes{$name}{default} || $defaults{$type},
             );
         if (defined $attributes{$name}{trigger}) {
             $properties{trigger} = $attributes{$name}{trigger};
@@ -125,7 +135,7 @@ The attribute in the child class that represents this class' id.
 
 sub has_many {
     my ($class, $name, $classname, $attribute) = @_;
-    _install_sub($class.'::'.$name, sub { my $self = shift; return $self->simpledb->domain($classname)->search({$attribute => $self->id}); });
+    _install_sub($class.'::'.$name, sub { my $self = shift; return $self->simpledb->domain($classname)->search(where=>{$attribute => $self->id}); });
 }
 
 #--------------------------------------------------------
@@ -373,16 +383,7 @@ sub put {
     # build the parameter list
     my $params = {ItemName => $self->id, DomainName=>$domain_name};
     foreach my $name (keys %{$attributes}) {                                                
-        my $type = $self->meta->find_attribute_by_name($name)->type_constraint;
-        my $values = $self->$name;
-        next unless defined $values; # don't store null values
-        unless ($type =~ m/Str$/) {
-            my $to_type = $type;
-            $to_type =~ s/SimpleDB::Class::Types::(.*)/to_$1AsStr/;
-            no strict;
-            $values = $to_type->($values);
-            use strict;
-        }
+        my $values = $self->stringify_values($name, $self->$name);
         unless (ref $values eq 'ARRAY') {
             $values = [$values];
         }
@@ -436,29 +437,19 @@ The current stringified value to parse.
 
 sub parse_value {
     my ($class, $name, $value) = @_;
-    my $isa = 'SdbStr';
-    unless ($name eq 'itemName()') {
-        my $attribute = $class->meta->find_attribute_by_name($name);
-        SimpleDB::Class::Exception::InvalidParam->throw(
-            name    => 'name',
-            value   => $name,
-            error   => q{There is no attribute called '}.$name.q{'.},
-            ) unless defined $attribute;
-        $isa = $attribute->type_constraint;
-    }
-    # unpad integers
-    if ($isa =~ m/Int/) {
-        return to_SdbInt($value); 
-    }
-    # unjsonify hashrefs
-    elsif ($isa =~ m/HashRef/) {
-        return to_SdbHashRef($value); 
-    }
-    # unstringify dates
-    elsif ($isa =~ m/DateTime/) {
-        return to_SdbDateTime($value);
-    }
-    return $value;
+    return $name if ($name eq 'itemName()');
+
+    # find type
+    my $attribute = $class->meta->find_attribute_by_name($name);
+    SimpleDB::Class::Exception::InvalidParam->throw(
+        name    => 'name',
+        value   => $name,
+        error   => q{There is no attribute called '}.$name.q{'.},
+        ) unless defined $attribute;
+    my $isa = $attribute->type_constraint;
+
+    # coerce
+    $isa->coerce($value);
 }
 
 #--------------------------------------------------------
@@ -479,29 +470,70 @@ The value to format.
 
 sub stringify_value {
     my ($class, $name, $value) = @_;
-    my $isa = 'SdbStr';
-    unless ($name eq 'itemName()') {
-        my $attribute = $class->meta->find_attribute_by_name($name);
-        SimpleDB::Class::Exception::InvalidParam->throw(
-            name    => 'name',
-            value   => $name,
-            error   => q{There is no attribute called '}.$name.q{'.},
-            ) unless defined $attribute;
-        $isa = $attribute->type_constraint;
-    }
-    # pad integers
-    if ($isa =~ m/Int/) {
+    return $value if ($name eq 'itemName()');
+
+    # find type
+    my $attribute = $class->meta->find_attribute_by_name($name);
+    SimpleDB::Class::Exception::InvalidParam->throw(
+        name    => 'name',
+        value   => $name,
+        error   => q{There is no attribute called '}.$name.q{'.},
+        ) unless defined $attribute;
+    my $isa = $attribute->type_constraint;
+
+    # coerce
+    # special cases for int stuff because technically ints are already strings
+    if ($isa =~ /Int$/) {
         return to_SdbIntAsStr($value); 
     }
-    # jsonify hashrefs
-    elsif ($isa =~ m/HashRef/) {
-        return to_SdbHashRefAsStr($value); 
+    else {
+        return to_SdbStr($value);
     }
-    # stringify dates
-    elsif ($isa =~ m/DateTime/) {
-        return to_SdbDateTimeAsStr($value);
+}
+
+#--------------------------------------------------------
+
+=head2 stringify_values ( name, values )
+
+Class method. Same as C<stringify_value>, but takes into account array types in addition to scalars.
+
+=head3 name
+
+The name of the attribute to format.
+
+=head3 values
+
+The value to format.
+
+=cut
+
+sub stringify_values {
+    my ($class, $name, $value) = @_;
+    return $name if ($name eq 'itemName()');
+
+    # find type
+    my $attribute = $class->meta->find_attribute_by_name($name);
+    SimpleDB::Class::Exception::InvalidParam->throw(
+        name    => 'name',
+        value   => $name,
+        error   => q{There is no attribute called '}.$name.q{'.},
+        ) unless defined $attribute;
+    my $isa = $attribute->type_constraint;
+
+    # coerce
+    # special cases for int stuff because technically ints are already strings
+    if ($isa eq 'SimpleDB::Class::Types::SdbArrayRefOfInt') {
+        return to_SdbArrayRefOfIntAsStr($value);
     }
-    return $value;
+    elsif ($isa eq 'SimpleDB::Class::Types::SdbInt') {
+        return to_SdbIntAsStr($value); 
+    }
+    elsif ($isa =~ m/ArrayRefOf|HashRef|MediumStr/) {
+        return to_SdbArrayRefOfStr($value);
+    }
+    else {
+        return to_SdbStr($value);
+    }
 }
 
 =head1 LEGAL

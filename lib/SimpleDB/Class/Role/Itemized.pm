@@ -70,6 +70,9 @@ sub determine_item_class {
     my $castor = $class->_castor_attribute;
     if ($castor) {
         my $reclass = $attributes->{$castor};
+        if (ref $reclass eq 'ARRAY') {
+            $reclass = $reclass->[0];
+        }
         if ($reclass) {
             return $reclass;
         }
@@ -115,34 +118,12 @@ sub parse_item {
         # get value
         my $value = $attribute->{Value};
 
-        # create expected hashref
-        if (exists $attributes->{$name}) {
-            if (ref $attributes->{$name} ne 'ARRAY') {
-                $attributes->{$name} = [$attributes->{$name}];
-            }
-            push @{$attributes->{$name}}, $value;
-        }
-        else {
-            $attributes->{$name} = $value;
-        }
+        # store attribute list
+        push @{$attributes->{$name}}, $value;
     }
 
     # now we can determine the item's class from attributes if necessary
     my $item_class = $self->determine_item_class($attributes);
-
-    # and appropriately format it's attribute values
-    foreach my $name (keys %{$attributes}) {
-        if (ref $attributes->{$name} eq 'ARRAY') {
-            my $i = 0;
-            foreach my $value (@{$attributes->{$name}}) {
-                $attributes->{$name}[$i] = $item_class->parse_value($name, $value);
-                $i++;
-            }
-        }
-        else {
-            $attributes->{$name} = $item_class->parse_value($name, $attributes->{$name});
-        }
-    }
 
     # now we're ready to instantiate
     return $item_class->new(simpledb=>$self->simpledb, id=>$id)->update($attributes);

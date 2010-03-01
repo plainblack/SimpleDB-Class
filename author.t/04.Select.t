@@ -90,7 +90,7 @@ $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { 'quantity' => ['>', 3]},
     );
-is($select->to_sql, "select * from `foo_domain` where `quantity` > '000001000000003'", "query with < where");
+is($select->to_sql, "select * from `foo_domain` where `quantity` > 'int000001000000003'", "query with < where");
 
 my $dt = DateTime->now;
 $select = SimpleDB::Class::SQL->new(
@@ -105,7 +105,7 @@ $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { 'quantity' => ['>=', -99999]},
     );
-is($select->to_sql, "select * from `foo_domain` where `quantity` >= '000000999900001'", "query with >= where");
+is($select->to_sql, "select * from `foo_domain` where `quantity` >= 'int000000999900001'", "query with >= where");
 
 $select = SimpleDB::Class::SQL->new(
     simpledb        => $foo,
@@ -140,7 +140,7 @@ $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { 'quantity' => ['between', -2,5]},
     );
-is($select->to_sql, "select * from `foo_domain` where `quantity` between '000000999999998' and '000001000000005'", "query with between where");
+is($select->to_sql, "select * from `foo_domain` where `quantity` between 'int000000999999998' and 'int000001000000005'", "query with between where");
 
 $select = SimpleDB::Class::SQL->new(
     simpledb        => $foo,
@@ -179,7 +179,7 @@ $select = SimpleDB::Class::SQL->new(
     item_class      => $domain->item_class,
     where           => { '-or' => \%or},
     );
-is($select->to_sql, "select * from `foo_domain` where (`color` = '2' or (`size` = 'this' and `quantity` = '000001000000001'))", "query with or/and where");
+is($select->to_sql, "select * from `foo_domain` where (`color` = '2' or (`size` = 'this' and `quantity` = 'int000001000000001'))", "query with or/and where");
 
 tie my %where, 'Tie::IxHash', color=>2, size=>'this';
 $select = SimpleDB::Class::SQL->new(

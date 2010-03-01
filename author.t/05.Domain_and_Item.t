@@ -29,48 +29,48 @@ if ($ARGV[0]) {
 }
 ok(grep({$_ eq $domain_expected} @{$foo->list_domains}), 'got created domain');
 is($parent->count, 0, 'should be 0 items');
-$parent->insert({title=>'One'},'one');
-$parent->insert({title=>'Two'},'two');
-sleep 1; # it's eventually consistent, so we have to wait a bit to make sure it's consistent
-is($parent->count, 2, 'should be 2 items');
+$parent->insert({title=>'One'},id=>'one');
+$parent->insert({title=>'Two'},id=>'two');
+is($parent->count(consistent=>1), 2, 'should be 2 items');
 
 $domain->create;
-ok($domain->insert({color=>'red',size=>'large',parentId=>'one',quantity=>5}, 'largered'), 'adding item with id');
+ok($domain->insert({color=>'red',size=>'large',parentId=>'one',quantity=>5}, id=>'largered'), 'adding item with id');
 ok($domain->insert({color=>'blue',size=>'small',parentId=>'two',quantity=>1}), 'adding item without id');
 is($domain->find('largered')->size, 'large', 'find() works');
 
 my $x = $domain->insert({color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'},quantity=>3});
 isa_ok($x, 'Foo::Domain');
-cmp_deeply($x->to_hashref, {properties=>{this=>'that'}, color=>'orange',size=>'large',size_formatted=>'Large',parentId=>'one', start_date=>undef, quantity=>3}, 'to_hashref()');
+cmp_deeply($x->to_hashref, {properties=>{this=>'that'}, color=>'orange',size=>'large',size_formatted=>'Large',parentId=>'one', start_date=>ignore(), quantity=>3}, 'to_hashref()');
 $domain->insert({color=>'green',size=>'small',parentId=>'two',quantity=>11});
 $domain->insert({color=>'black',size=>'huge',parentId=>'one',quantity=>2});
-sleep 1;
-is($domain->max('quantity'), 11, 'max');
-is($domain->min('quantity'), 1, 'min');
-is($domain->max('quantity',{parentId=>'one'}), 5, 'max with clause');
-is($domain->min('quantity',{parentId=>'one'}), 2, 'min with clause');
+is($domain->max('quantity', consistent=>1), 11, 'max');
+is($domain->min('quantity', consistent=>1), 1, 'min');
+is($domain->max('quantity',consistent=>1, where=>{parentId=>'one'}), 5, 'max with clause');
+is($domain->min('quantity', consistent=>1, where=>{parentId=>'one'}), 2, 'min with clause');
 
-my $foos = $domain->search({size=>'small'});
+my $foos = $domain->search(where=>{size=>'small'}, consistent=>1);
 isa_ok($foos, 'SimpleDB::Class::ResultSet');
 isa_ok($foos->next, 'Foo::Domain');
 my $a_domain = $foos->next;
 ok($a_domain->can('size'), 'attribute methods created');
 ok(!$a_domain->can('title'), 'other class attribute methods not created');
 is($a_domain->size, 'small', 'fetched an item from the result set');
-$foos = $domain->search({'itemName()'=>$a_domain->id});
+$foos = $domain->search(consistent=>1, where=>{'itemName()'=>$a_domain->id});
 my $b_domain = $foos->next;
 is($b_domain->id, $a_domain->id, "searching on itemName() works");
-$foos = $domain->search({size=>'small'}, 'itemName()');
+$foos = $domain->search(where=>{size=>'small'}, consistent=>1, order_by=>'itemName()');
 $a_domain = $foos->next;
+print $a_domain->id."\n";
 $b_domain = $foos->next;
+print $b_domain->id."\n";
 ok($a_domain->id < $b_domain->id, 'order by itemName() works');
 my $c_domain = $b_domain->copy;
 is($b_domain->size, $c_domain->size, "copy() works.");
 cmp_ok($b_domain->id, 'ne', $c_domain->id, "copy() provides new id");
-$foos = $domain->search({size=>'small'});
+$foos = $domain->search(where=>{size=>'large'}, consistent=>1);
 is($foos->count, 2, 'counting items in a result set');
-$foos = $domain->search({size=>'small'});
-is($foos->count({color=>'green'}), 1, 'counting subset of items in a result set');
+$foos = $domain->search(consistent=>1, where=>{size=>'large'});
+is($foos->count(where=>{color=>'orange'}), 1, 'counting subset of items in a result set');
 
 my $children = $foo->domain('foo_child');
 $children->create;
