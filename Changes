@@ -1,4 +1,7 @@
-1.0000 2010-02-24
+1.0001 2010-03-01
+ - Fixed a bug dealing with undefined values and type coersion.
+
+1.0000 2010-03-01
 
 NOTE: This release is not compatible with previous releases in either API or data storage, which is the reason for the change in version number. I've made a number of changes in this release, which are noted below, which will provide more options, more flexibility, better speed, and less storage usage. I appologize for any inconvenience. 
 

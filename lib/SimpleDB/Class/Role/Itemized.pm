@@ -117,6 +117,9 @@ sub parse_item {
 
         # get value
         my $value = $attribute->{Value};
+        if (ref $value eq 'HASH' && !(keys %{$value})) { # undef comes back as an empty hash for some reason
+            next; # no need to store undef
+        }
 
         # store attribute list
         push @{$attributes->{$name}}, $value;
