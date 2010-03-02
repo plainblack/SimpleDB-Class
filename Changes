@@ -1,3 +1,8 @@
+1.0100 2010-03-02
+ - Fixed a bug where result sets weren't honoring limit and order_by clauses.
+ - Added pagination feature to result sets.
+ - Answered question in FAQ about what the version number means.
+
 1.0001 2010-03-01
  - Fixed a bug dealing with undefined values and type coersion.
 

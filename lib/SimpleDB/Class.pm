@@ -90,6 +90,10 @@ It automatically serializes hashes into JSON so they can be stored in SimpleDB d
 
 =item *
 
+It gives you an easy way to handle pagination of data. See L<SimpleDB::Class::ResultSet/"paginate">.
+
+=item *
+
 It uses L<Moose> for everything, which makes it easy to use Moose's introspection features or method insertion features. 
 
 =item *

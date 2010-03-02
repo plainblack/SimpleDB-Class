@@ -47,9 +47,17 @@ A result as returned from the send_request() method from L<SimpleDB::Class::HTTP
 
 A where clause as defined in L<SimpleDB::Class::SQL>. Either this or a result is required.
 
+=head4 order_by
+
+An order_by clause as defined in L<SimpleDB::Class::SQL>. Optional.
+
+=head4 limit
+
+A limit clause as defined in L<SimpleDB::Class::SQL>. Optional.
+
 =head4 consistent
 
-A boolean that if set true will get around Eventual Consistency, but at a reduced performance.
+A boolean that if set true will get around Eventual Consistency, but at a reduced performance. Optional.
 
 =cut
 
@@ -92,6 +100,32 @@ Returns the where passed into the constructor.
 has where => (
     is          => 'ro',
     isa         => 'HashRef',
+);
+
+#--------------------------------------------------------
+
+=head2 order_by ( )
+
+Returns the order_by passed into the constructor.
+
+=cut
+
+has order_by => (
+    is          => 'ro',
+    predicate   => 'has_order_by',
+);
+
+#--------------------------------------------------------
+
+=head2 limit ( )
+
+Returns the limit passed into the constructor.
+
+=cut
+
+has limit => (
+    is          => 'rw',
+    predicate   => 'has_limit',
 );
 
 #--------------------------------------------------------
@@ -143,27 +177,38 @@ has iterator => (
 
 #--------------------------------------------------------
 
-=head2 fetch_result ( )
+=head2 fetch_result ( [ next ] )
 
 Fetches a result, based on a where clause passed into a constructor, and then makes it accessible via the result() method.
+
+=head3 next
+
+A next token, in order to fetch the next part of a result set.
 
 =cut
 
 sub fetch_result {
-    my ($self) = @_;
-    my $select = SimpleDB::Class::SQL->new(
+    my ($self, $next) = @_;
+    my %sql_params = (
         item_class  => $self->item_class,
         simpledb    => $self->simpledb,
         where       => $self->where,
-    );
+        );
+    if ($self->has_order_by) {
+        $sql_params{order_by} = $self->order_by;
+    }
+    if ($self->has_limit) {
+        $sql_params{limit} = $self->limit;
+    }
+    my $select = SimpleDB::Class::SQL->new(%sql_params);
     my %params = (SelectExpression => $select->to_sql);
     if ($self->consistent) {
         $params{ConsistentRead} = 'true';
     }
 
     # if we're fetching and we already have a result, we can assume we're getting the next batch
-    if ($self->has_result) { 
-        $params{NextToken} = $self->result->{SelectResult}{NextToken};
+    if (defined $next && $next ne '') { 
+        $params{NextToken} = $next;
     }
 
     my $result = $self->simpledb->http->send_request('Select', \%params);
@@ -286,6 +331,52 @@ sub delete {
 
 #--------------------------------------------------------
 
+=head2 paginate ( items_per_page, page_number ) 
+
+Use on a new result set to fast forward to the desired data. After you've paginated, you can call C<next> to start fetching your data. Returns a reference to the result set for easy method chaining.
+
+B<NOTE:> Unless you've already set a limit, the limit for this result set will be set to C<items_per_page> as a convenience. 
+
+=head3 items_per_page
+
+An integer representing how many items you're fetching/displaying per page.
+
+=head3 page_number
+
+An integer representing what page number you'd like to skip ahead to.
+
+=cut
+
+sub paginate {
+    my ($self, $items_per_page, $page_number) = @_;
+    unless ($self->has_limit) {
+        $self->limit($items_per_page);
+    }
+    my $limit = ($items_per_page * ($page_number - 1));
+    return $self if $limit == 0;
+    my %sql_params = (
+        item_class  => $self->item_class,
+        simpledb    => $self->simpledb,
+        where       => $self->where,
+        output      => 'count(*)',
+        limit       => $limit,
+        );
+    if ($self->has_order_by) {
+        $sql_params{order_by} = $self->order_by;
+    }
+    my $select = SimpleDB::Class::SQL->new(%sql_params);
+    my %params = (SelectExpression => $select->to_sql);
+    if ($self->consistent) {
+        $params{ConsistentRead} = 'true';
+    }
+    my $result = $self->simpledb->http->send_request('Select', \%params);
+    $self->fetch_result($result->{SelectResult}{NextToken});
+    return $self;
+}
+
+
+#--------------------------------------------------------
+
 =head2 next () 
 
 Returns the next result in the result set. Also fetches th next partial result set if there's a next token in the first result set and you've iterated through the first partial set.
@@ -307,7 +398,7 @@ sub next {
         if (exists $result->{SelectResult}{NextToken}) {
             $self->iterator(0);
             $iterator = 0;
-            $result = $self->fetch_result;
+            $result = $self->fetch_result($result->{SelectResult}{NextToken});
         }
         else {
             return undef;

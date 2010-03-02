@@ -370,14 +370,18 @@ A boolean that if set true will get around Eventual Consistency, but at a reduce
 
 sub search {
     my ($self, %options) = @_;
-    return SimpleDB::Class::ResultSet->new(
+    my %params = (
         simpledb    => $self->simpledb,
         item_class  => $self->item_class,
         where       => $options{where},
-        order_by    => $options{order_by},
-        limit       => $options{limit},
         consistent  => $options{consistent},
-        );
+    );
+    foreach my $option (qw(order_by limit)) {
+        if (exists $options{$option}) {
+            $params{$option} = $options{$option};
+        }
+    }
+    return SimpleDB::Class::ResultSet->new(%params);
 }
 
 =head1 LEGAL

@@ -85,6 +85,16 @@ Given the previous example of using C<recast_using> to store multiple object typ
 
  __PACKAGE__->set_domain_name('gas_giants');
 
+=head2 Does the version number have meaning?
+
+Yes. In a version number like C<1.0402> there are three pieces of information that can be gleened. 
+
+The first is the number before the decimal (C<1>). That is the API version number, and only changes if the API or data storage mechanisms change in an incompatible way to previous releases. Therefore if you write code against version C<1.0001> and then sometime later C<1.5702> comes out, you can be reasonably sure your code will still function as you expect it to on C<1.5702>. However, if C<2.0000> comes out, all bets are off.
+
+The second number (C<04>) is the feature release. That number is changed every time a new feature is added to the system and released. It gets reset to C<00> if the API version number changes.
+
+The third number (C<02>) is the bug fix number. That number is changed every time a new release comes out that only contains bug fixes. It gets reset to C<00> if the feature release number is incremented.
+
  1;
 
 Now all C<GasGiant> objects will be stored in the C<gas_giants> domain, but all other C<StellarBody> objects and subclasses will be stored in the C<bodies> domain.

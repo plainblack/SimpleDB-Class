@@ -1,4 +1,4 @@
-use Test::More tests => 43;
+use Test::More tests => 44;
 use Test::Deep;
 use lib ('../lib', 'lib');
 $|=1;
@@ -58,7 +58,7 @@ is($a_domain->size, 'small', 'fetched an item from the result set');
 $foos = $domain->search(consistent=>1, where=>{'itemName()'=>$a_domain->id});
 my $b_domain = $foos->next;
 is($b_domain->id, $a_domain->id, "searching on itemName() works");
-$foos = $domain->search(where=>{size=>'small'}, consistent=>1, order_by=>'itemName()');
+$foos = $domain->search(where=>{size=>'small', 'itemName()'=>['>','0']}, consistent=>1, order_by=>'itemName()');
 $a_domain = $foos->next;
 $b_domain = $foos->next;
 ok($a_domain->id < $b_domain->id, 'order by itemName() works');
@@ -97,7 +97,7 @@ This is a really long note that I am adding to prove that we can have really lon
 This is a really long note that I am adding to prove that we can have really long notes in SimpleDB. 
 ';
 
-my $j = $domain->insert({start_date=>DateTime->new(year=>2000, month=>5, day=>5, hour=>5, minute=>5, second=>5), color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'},quantity=>3, notes=>$note, components=>['cotton','dye','thread']});
+my $j = $domain->insert({start_date=>DateTime->new(year=>2000, month=>5, day=>5, hour=>5, minute=>5, second=>5), color=>'orange',size=>'large',parentId=>'one',properties=>{this=>'that'},quantity=>4, notes=>$note, components=>['cotton','dye','thread']});
 my $j1 = $domain->find($j->id);
 cmp_ok($j->start_date, '==', $j1->start_date, 'dates in are dates out');
 is($j->start_date->year, 2000, 'year');
@@ -109,6 +109,13 @@ is($j->start_date->second, 5, 'second');
 is($j1->properties->{this}, 'that', 'hash refs work');
 is($j1->notes, $note, 'medium strings work');
 is($j1->components->[1], 'dye', 'arrays of strings work');
+
+my $page2 = $domain->search(
+    where => { quantity => ['>', 1] },
+    consistent => 1,
+    order_by => 'quantity'
+    )->paginate(2,2);
+is($page2->next->color, 'orange', "pagination works");
 
 ok($domain->delete,'deleting domain');
 $parent->delete;
