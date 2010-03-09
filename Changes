@@ -1,3 +1,7 @@
+1.0101 2010-03-09
+ - Now including author tests in distribution.
+ - Fixed a bug with long running queries and NextTokens.
+
 1.0100 2010-03-02
  - Fixed a bug where result sets weren't honoring limit and order_by clauses.
  - Added pagination feature to result sets.
