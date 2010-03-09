@@ -1,5 +1,4 @@
-1.0101 2010-03-09
- - Now including author tests in distribution.
+1.0102 2010-03-09
  - Fixed a bug with long running queries and NextTokens.
 
 1.0100 2010-03-02
