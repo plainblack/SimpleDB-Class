@@ -90,6 +90,7 @@ Returns a L<Memcached::libmemcached> object, which is constructed using the info
 has 'memcached' => (
     is  => 'ro',
     lazy    => 1,
+    clearer => 'clear_memcached',
     default => sub {
         my $self = shift;
         my $memcached = Memcached::libmemcached::memcached_create();
@@ -149,7 +150,7 @@ The key to delete.
 
 sub delete {
     my $self = shift;
-    my ($domain, $id) = validate_pos(@_, { type => SCALAR }, { type => SCALAR });
+    my ($domain, $id, $retry) = validate_pos(@_, { type => SCALAR }, { type => SCALAR }, { optional => 1 } );
     my $key = $self->fix_key($domain, $id);
     my $memcached = $self->memcached;
     Memcached::libmemcached::memcached_delete($memcached, $key);
@@ -157,6 +158,18 @@ sub delete {
         SimpleDB::Class::Exception::Connection->throw(
             error   => "Cannot connect to memcached server."
             );
+    }
+    elsif ($memcached->errstr eq 'UNKNOWN READ FAILURE' ) {
+        if ($retry) {
+            SimpleDB::Class::Exception::Connection->throw(
+                error   => "Cannot connect to memcached server."
+            );
+        }
+        else {
+            warn "Memcached went away, reconnecting.";
+            $self->clear_memcached;
+            $self->delete($domain, $id, 1);
+        }
     }
     elsif ($memcached->errstr eq 'NOT FOUND' ) {
        SimpleDB::Class::Exception::ObjectNotFound->throw(
@@ -189,13 +202,22 @@ Throws SimpleDB::Class::Exception::Connection and SimpleDB::Class::Exception.
 =cut
 
 sub flush {
-    my ($self) = @_;
+    my ($self, $retry) = @_;
     my $memcached = $self->memcached;
     Memcached::libmemcached::memcached_flush($memcached);
     if ($memcached->errstr eq 'SYSTEM ERROR Unknown error: 0') {
         SimpleDB::Class::Exception::Connection->throw(
             error   => "Cannot connect to memcached server."
         );
+    }
+    elsif ($memcached->errstr eq 'UNKNOWN READ FAILURE' ) {
+        SimpleDB::Class::Exception::Connection->throw(
+            error   => "Cannot connect to memcached server."
+        ) if $retry;
+
+        warn "Memcached went away, reconnecting.";
+        $self->clear_memcached;
+        return $self->flush(1);
     }
     elsif ($memcached->errstr eq 'NO SERVERS DEFINED') {
         SimpleDB::Class::Exception->throw(
@@ -229,7 +251,7 @@ The key to retrieve.
 
 sub get {
     my $self = shift;
-    my ($domain, $id) = validate_pos(@_, { type => SCALAR }, { type => SCALAR });
+    my ($domain, $id, $retry) = validate_pos(@_, { type => SCALAR }, { type => SCALAR }, { optional => 1 });
     my $key = $self->fix_key($domain, $id);
     my $memcached = $self->memcached;
     my $content = Memcached::libmemcached::memcached_get($memcached, $key);
@@ -255,10 +277,15 @@ sub get {
             error   => "No memcached servers specified."
             );
     }
-    elsif ($memcached->errstr eq 'SYSTEM ERROR Unknown error: 0') {
+    elsif ($memcached->errstr eq 'SYSTEM ERROR Unknown error: 0' || $retry) {
         SimpleDB::Class::Exception::Connection->throw(
             error   => "Cannot connect to memcached server."
             );
+    }
+    elsif ($memcached->errstr eq 'UNKNOWN READ FAILURE' ) {
+        warn "Memcached went away, reconnecting.";
+        $self->clear_memcached;
+        return $self->get($domain, $id, 1);
     }
     SimpleDB::Class::Exception->throw(
         error   => "Couldn't get $key from cache because ".$memcached->errstr
@@ -282,6 +309,7 @@ An array reference of domain names and ids to retrieve.
 sub mget {
     my $self = shift;
     my ($names) = validate_pos(@_, { type => ARRAYREF });
+    my $retry = shift;
     my @keys = map { $self->fix_key(@{$_}) } @{ $names };
     my %result;
     my $memcached = $self->memcached;
@@ -290,6 +318,14 @@ sub mget {
         SimpleDB::Class::Exception::Connection->throw(
             error   => "Cannot connect to memcached server."
             );
+    }
+    elsif ($memcached->errstr eq 'UNKNOWN READ FAILURE' ) {
+        SimpleDB::Class::Exception::Connection->throw(
+            error   => "Cannot connect to memcached server."
+            ) if $retry;
+        warn "Memcached went away, reconnecting.";
+        $self->clear_memcached;
+        return $self->get($names, 1);
     }
     elsif ($memcached->errstr eq 'NO SERVERS DEFINED') {
         SimpleDB::Class::Exception->throw(
@@ -340,7 +376,7 @@ A time in seconds for the cache to exist. Default is 3600 seconds (1 hour).
 
 sub set {
     my $self = shift;
-    my ($domain, $id, $value, $ttl) = validate_pos(@_, { type => SCALAR }, { type => SCALAR }, { type => HASHREF }, { type => SCALAR | UNDEF, optional => 1 });
+    my ($domain, $id, $value, $ttl, $retry) = validate_pos(@_, { type => SCALAR }, { type => SCALAR }, { type => HASHREF }, { type => SCALAR | UNDEF, optional => 1 }, { optional => 1 });
     my $key = $self->fix_key($domain, $id);
     $ttl ||= 60;
     my $frozenValue = Storable::nfreeze($value); 
@@ -349,10 +385,15 @@ sub set {
     if ($memcached->errstr eq 'SUCCESS') {
         return $value;
     }
-    elsif ($memcached->errstr eq 'SYSTEM ERROR Unknown error: 0') {
+    elsif ($memcached->errstr eq 'SYSTEM ERROR Unknown error: 0' || $retry) {
         SimpleDB::Class::Exception::Connection->throw(
             error   => "Cannot connect to memcached server."
             );
+    }
+    elsif ($memcached->errstr eq 'UNKNOWN READ FAILURE' ) {
+        warn "Memcached went away, reconnecting.";
+        $self->clear_memcached;
+        return $self->set($domain, $id, $value, $ttl, 1);
     }
     elsif ($memcached->errstr eq 'NO SERVERS DEFINED') {
         SimpleDB::Class::Exception->throw(

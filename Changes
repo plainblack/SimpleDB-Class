@@ -1,3 +1,6 @@
+1.0103 2010-03-14
+ - Cache now gracefully detects memcached servers that were restarted, and reconnects to them.
+
 1.0102 2010-03-09
  - Fixed a bug with long running queries and NextTokens.
 
