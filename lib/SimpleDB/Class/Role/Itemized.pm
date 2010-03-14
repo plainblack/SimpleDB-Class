@@ -45,11 +45,11 @@ An optional id to instantiate the item with.
 
 sub instantiate_item {
     my ($self, $attributes, $id) = @_;
-    my %params = (simpledb=>$self->simpledb);
+    $attributes->{simpledb} = $self->simpledb;
     if (defined $id && $id ne '') {
-        $params{id} = $id;
+        $attributes->{id} = $id;
     }
-    return $self->determine_item_class($attributes)->new(%params)->update($attributes);
+    return $self->determine_item_class($attributes)->new($attributes);
 }
 
 #--------------------------------------------------------
@@ -129,7 +129,9 @@ sub parse_item {
     my $item_class = $self->determine_item_class($attributes);
 
     # now we're ready to instantiate
-    return $item_class->new(simpledb=>$self->simpledb, id=>$id)->update($attributes);
+    $attributes->{simpledb} = $self->simpledb;
+    $attributes->{id} = $id;
+    return $item_class->new($attributes);
 }
 
 =head1 LEGAL

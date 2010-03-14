@@ -24,12 +24,18 @@ As you might notice when you call
 
 it creates the item and inserts it into the database. Sometimes you want to create the item in advance, play around with it, and then decide whether to insert it into the database. This is fairly easy, but not entirely intuitive. Let's assume you have a L<SimpleDB::Class::Item> subclass called C<Book> that you've created. Do the following:
 
- my $item = Book->new(simpledb=>$simpledb)->update(\%attributes);
+ $attributes{simpledb} = $simpledb;
+ my $item = Book->new(\%attributes);
 
 or
 
  my $item = Book->new(simpledb=>$simpledb);
  $item->some_attribute($value);
+
+or
+
+ my $item = Book->new(simpledb=>$simpledb)->update(\%attributes);
+
 
 Then when you're ready to insert it:
 

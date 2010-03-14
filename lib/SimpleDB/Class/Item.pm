@@ -232,12 +232,6 @@ sub update {
     my ($self, $attributes) = @_;
     my $registered_attributes = $self->attributes;
     foreach my $attribute (keys %{$attributes}) {
-        # add unknown attributes
-        if (!exists $registered_attributes->{$attribute}) {
-           $self->add_attributes($attribute => { isa => 'Str' }); 
-        }
-
-        # update attribute value
         $self->$attribute($attributes->{$attribute});
     }
     return $self;

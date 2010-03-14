@@ -3,11 +3,11 @@ use lib '../lib';
 
 use_ok('SimpleDB::Class::HTTP');
 
-my $access = $ENV{SIMPLEDB_ACCESS_KEY};
-my $secret = $ENV{SIMPLEDB_SECRET_KEY};
+my $access = $ENV{AWS_ACCESS_KEY};
+my $secret = $ENV{AWS_SECRET_ACCESS_KEY};
 
 unless (defined $access && defined $secret) {
-    die "You need to set environment variables SIMPLEDB_ACCESS_KEY and SIMPLEDB_SECRET_KEY to run these tests.";
+    die "You need to set environment variables AWS_ACCESS_KEY and AWS_SECRE_ACCESST_KEY to run these tests.";
 }
 
 my $http = SimpleDB::Class::HTTP->new(secret_key=>$secret, access_key=>$access);

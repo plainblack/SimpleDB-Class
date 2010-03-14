@@ -106,7 +106,7 @@ It has built in domain prefixing to account for the fact that you can't create m
 
 =item *
 
-It automatically deals with the fact that you might have some attributes in your items that aren't in your L<SimpleDB::Class::Item> subclasses, and creates accessors and mutators for them on the fly at retrieval time. 
+It ignores attributes in your items that aren't in your L<SimpleDB::Class::Item> subclasses.
 
 =item *
 
