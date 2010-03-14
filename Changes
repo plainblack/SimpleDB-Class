@@ -1,4 +1,6 @@
 1.0200 2010-03-14
+ - Added options on find(), search(), and insert() to set attributes once an item is instantiated. This is useful for prepopulating cache attributes which speeds up the system (no lookups needed), and helps prevent situations where you'd have stale objects in your code.
+ - Added a mate option to belongs_to() and has_many(), which will automatically use the new set option when the objects are instantiated.
  - Reduced the number of method calls needed to instantiate an item, which improves performance marginally.
  - Now ignores extra attributes that are in your item, but aren't defined by your Item class. This protects the integrity of that data better, allows you to make your classes immutable, so they run faster, and allows you to change your schema in the code without worrying about changing the schema of the data itself.
  - Fixed some outdated documentation on SimpleDB::Class::HTTP

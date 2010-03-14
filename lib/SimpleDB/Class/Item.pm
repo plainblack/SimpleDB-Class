@@ -131,11 +131,24 @@ The class name of the class you're creating the child relationship with.
 
 The attribute in the child class that represents this class' id.
 
+=head3 mate
+
+Optional. The name of the attribute that will be created in C<class> to refer back to this object. If specified, a reference to this object will be set in C<class> when it is instantiated to avoid stale references.
+
 =cut
 
 sub has_many {
-    my ($class, $name, $classname, $attribute) = @_;
-    _install_sub($class.'::'.$name, sub { my $self = shift; return $self->simpledb->domain($classname)->search(where=>{$attribute => $self->id}); });
+    my ($class, $name, $classname, $attribute, $mate) = @_;
+    _install_sub($class.'::'.$name, sub { 
+        my $self = shift; 
+        my %options = (
+            where => {$attribute => $self->id},
+        );
+        if ($mate) {
+            $options{set} = { $mate => $self };
+        }
+        return $self->simpledb->domain($classname)->search(%options); 
+    });
 }
 
 #--------------------------------------------------------
@@ -160,11 +173,15 @@ The class name of the parent class you're relating this class to.
 
 The attribute in this class' attribute list that represents the id of the parent class.
 
+=head3 mate
+
+Optional. The name of the attribute that will be created in C<class> to refer back to this object. If specified, a reference to this object will be set in C<class> when it is instantiated to avoid stale references. This would only be useful in the case of a 1:1 relationship.
+
 =cut
 
 
 sub belongs_to {
-    my ($class, $name, $classname, $attribute) = @_;
+    my ($class, $name, $classname, $attribute, $mate) = @_;
     my $clearer = 'clear_'.$name;
     $class->meta->add_attribute($name, {
         is      => 'rw',
@@ -173,7 +190,11 @@ sub belongs_to {
                 my $self = shift;
                 my $id = $self->$attribute;
                 return undef unless ($id ne '');
-                $self->simpledb->domain($classname)->find($id);
+                my %options;
+                if ($mate) {
+                    $options{set} = { $mate => $self };
+                }
+                return $self->simpledb->domain($classname)->find($id, %options);
             },
         clearer => $clearer,
         });

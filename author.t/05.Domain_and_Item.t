@@ -1,4 +1,4 @@
-use Test::More tests => 44;
+use Test::More tests => 45;
 use Test::Deep;
 use lib ('../lib', 'lib');
 $|=1;
@@ -29,7 +29,7 @@ if ($ARGV[0]) {
 }
 ok(grep({$_ eq $domain_expected} @{$foo->list_domains}), 'got created domain');
 is($parent->count, 0, 'should be 0 items');
-$parent->insert({title=>'One'},id=>'one');
+my $parent_one = $parent->insert({title=>'One'},id=>'one');
 $parent->insert({title=>'Two'},id=>'two');
 is($parent->count(consistent=>1), 2, 'should be 2 items');
 
@@ -77,7 +77,8 @@ isa_ok($child, 'Foo::Child');
 my $subchild = $children->insert({domainId=>'largered', class=>'Foo::SubChild'});
 isa_ok($subchild, 'Foo::SubChild');
 
-my $largered = $domain->find('largered');
+my $largered = $domain->find('largered', set => { parent => $parent_one } );
+is($parent_one, $largered->parent, 'presetting parent works');
 is($largered->parent->title, 'One', 'belongs_to works');
 $largered->parentId('two');
 is($largered->parent->title, 'Two', 'belongs to clear works');
