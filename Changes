@@ -2,6 +2,7 @@
  - belongs_to references are now weak, to prevent memory leaks
  - Reduced the number of method calls needed to instantiate an item, which improves performance marginally.
  - Now ignores extra attributes that are in your item, but aren't defined by your Item class. This protects the integrity of that data better, allows you to make your classes immutable, so they run faster, and allows you to change your schema in the code without worrying about changing the schema of the data itself.
+ - Fixed some outdated documentation on SimpleDB::Class::HTTP
 
 1.0103 2010-03-14
  - Cache now gracefully detects memcached servers that were restarted, and reconnects to them.

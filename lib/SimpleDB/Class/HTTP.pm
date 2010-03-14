@@ -13,7 +13,7 @@ SimpleDB::Class::HTTP - The network interface to the SimpleDB service.
 
 =head1 DESCRIPTION
 
-This class will let you quickly and easily inteface with AWS SimpleDB. It throws exceptions from L<SimpleDB::Class::Exception>, but other than that doesn't rely on any of the other modules in the SimpleDB::Class system, which means it's very light weight. Although we haven't run any benchmarks, it should outperform any of the other Perl modules that exist today. 
+This class will let you quickly and easily inteface with AWS SimpleDB. It throws exceptions from L<SimpleDB::Class::Exception>, but other than that doesn't rely on any of the other modules in the SimpleDB::Class system, which means it's very light weight. Although we haven't run any benchmarks on the other modules, it should outperform any of the other Perl modules that exist today. 
 
 =head1 METHODS
 
@@ -206,19 +206,15 @@ sub send_request {
 
 #--------------------------------------------------------
 
-=head2 handle_response ( body, headers ) 
+=head2 handle_response ( response ) 
 
 Returns a hashref containing the response from SimpleDB.
 
 Throws SimpleDB::Class::Exception::Response.
 
-=head3 body
+=head3 response
 
-The XML returned by SimpleDB.
-
-=head3 headers
-
-The HTTP headers.
+The L<HTTP::Response> object created by the C<send_request> method.
 
 =cut
 
