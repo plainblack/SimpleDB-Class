@@ -169,6 +169,7 @@ sub belongs_to {
     $class->meta->add_attribute($name, {
         is      => 'rw',
         lazy    => 1,
+        weak_ref=> 1,
         default => sub {
                 my $self = shift;
                 my $id = $self->$attribute;
