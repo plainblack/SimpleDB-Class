@@ -1,4 +1,4 @@
-use Test::More tests => 45;
+use Test::More tests => 47;
 use Test::Deep;
 use lib ('../lib', 'lib');
 $|=1;
@@ -69,6 +69,9 @@ $foos = $domain->search(where=>{size=>'large'}, consistent=>1);
 is($foos->count, 2, 'counting items in a result set');
 $foos = $domain->search(consistent=>1, where=>{size=>'large'});
 is($foos->count(where=>{color=>'orange'}), 1, 'counting subset of items in a result set');
+
+is($parent_one->domains->count, 3, "can count result set");
+is($parent_one->domains(where=>{color=>'red'})->count, 1, "can narrow relationship");
 
 my $children = $foo->domain('foo_child');
 $children->create;

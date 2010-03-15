@@ -8,7 +8,7 @@ __PACKAGE__->add_attributes(
     domainId=>{isa=>'Str'},
     class   =>{isa=>'Str'},
 );
-__PACKAGE__->belongs_to('domain', 'Foo::Domain', 'domainId');
+__PACKAGE__->belongs_to('domain', 'Foo::Domain', 'domainId',consistent=>1); # consistent because we run tests in real time
 __PACKAGE__->recast_using('class');
 
 1;

@@ -1,3 +1,10 @@
+1.0300 2010-03-15
+ - Added options to the has_many and belongs_to methods for consistency and other things.
+ - Added runtime options for has_many generated methods.
+ - Added has_ predicate method for belongs_to generated methods.
+ - Better documentation for the has_many and belongs_to methods, and their generated methods.
+ - Included author tests as they might make good examples for someone.
+
 1.0200 2010-03-14
  - Added options on find(), search(), and insert() to set attributes once an item is instantiated. This is useful for prepopulating cache attributes which speeds up the system (no lookups needed), and helps prevent situations where you'd have stale objects in your code.
  - Added a mate option to belongs_to() and has_many(), which will automatically use the new set option when the objects are instantiated.

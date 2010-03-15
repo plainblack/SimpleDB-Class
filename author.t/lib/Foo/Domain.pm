@@ -20,8 +20,8 @@ __PACKAGE__->add_attributes(
     notes           =>{isa=>'MediumStr'},
     components      =>{isa=>'ArrayRefOfStr'},
     );
-__PACKAGE__->has_many('children', 'Foo::Child', 'domainId', 'domain');
-__PACKAGE__->belongs_to('parent', 'Foo::Parent', 'parentId');
+__PACKAGE__->has_many('children', 'Foo::Child', 'domainId', mate=>'domain', consistent=>1); # consistent because we run tests in real time
+__PACKAGE__->belongs_to('parent', 'Foo::Parent', 'parentId', consistent=>1);
 
 
 1;
