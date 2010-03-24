@@ -181,6 +181,7 @@ sub find {
     }
 
     # process the 'set' option
+    return undef unless defined $item;
     foreach my $attribute (keys %{$options{set}}) {
         $item->$attribute( $options{set}{$attribute} );
     }
