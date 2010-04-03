@@ -125,7 +125,9 @@ sub slice_string {
     my $string = shift;
     my @array;
     my $i = 1;
-    foreach my $part (split /.{1020}/, $string) {
+    my @parts;
+    push @parts, substr $string, 0, 1020, '' while length $string;
+    foreach my $part (@parts) {
         push @array, sprintf "%03d|%s", $i, $part;
         $i++;
     }

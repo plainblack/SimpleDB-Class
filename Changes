@@ -1,5 +1,6 @@
-1.0301 2010-03-15
+1.0301 2010-04-04
  - Fixed undefined value exception calling find() on non-existant item.
+ - Fixed long MediumString, long HashRef problem. 
 
 1.0300 2010-03-15
  - Added options to the has_many and belongs_to methods for consistency and other things.
