@@ -471,6 +471,24 @@ sub next {
     return $itemobj;
 }
 
+#--------------------------------------------------------
+
+=head2 to_array_ref ()
+
+Returns an array reference containing all the objects in the result set. If the result set has already been partially walked, then only the remaining objects will be returned.
+
+=cut
+
+sub to_array_ref {
+    my ($self) = @_;
+    my @all;
+    while (my $object = $self->next) {
+        push @all, $object;
+    }
+    return \@all;
+}
+
+
 =head1 LEGAL
 
 SimpleDB::Class is Copyright 2009-2010 Plain Black Corporation (L<http://www.plainblack.com/>) and is licensed under the same terms as Perl itself.

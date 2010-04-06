@@ -1,4 +1,5 @@
-1.0301 2010-04-04
+1.0400 2010-04-07
+ - Added to_array_ref() in ResultSet.
  - Fixed undefined value exception calling find() on non-existant item.
  - Fixed long MediumString, long HashRef problem. 
 
