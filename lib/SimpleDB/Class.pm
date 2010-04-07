@@ -391,19 +391,13 @@ sub list_domains {
 
 This package requires the following modules:
 
-L<XML::Simple>
-L<LWP>
 L<JSON>
-L<TimeHiRes>
-L<Crypt::SSLeay>
 L<Sub::Name>
 L<DateTime>
 L<DateTime::Format::Strptime>
 L<Moose>
 L<MooseX::Types>
 L<MooseX::ClassAttribute>
-L<Digest::SHA>
-L<URI>
 L<Module::Find>
 L<UUID::Tiny>
 L<Exception::Class>
