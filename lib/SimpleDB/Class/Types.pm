@@ -31,19 +31,19 @@ A string of less than 1024 characters. Defaults to C<''>. The basic working unit
 
 =head2 ArrayRefOfStr
 
-An array reference of strings which can have up to 254 elements. Each string follows the rules of C<Str>. This is your basic multi-value workhorse, as it is the fastest multi-value type.
+An array reference of strings which can have up to 254 elements. Each string follows the rules of C<Str>. This is your basic multi-value workhorse, as it is the fastest multi-value type. See B<Attribute Limits> for special considerations about this type.
 
 =head2 MediumStr
 
-A string of up to 259,080 characters. Defaults to C<''>. Use this B<only> if you need to store text larger than C<Str> will allow. Much slower than C<Str> and not reliably searchable or sortable.
+A string of up to 259,080 characters. Defaults to C<''>. Use this B<only> if you need to store text larger than C<Str> will allow. Much slower than C<Str> and not reliably searchable or sortable. See B<Attribute Limits> for special considerations about this type.
 
 =head2 Int
 
-An integer between -999,999 and 99,999,999,999,999 (without the commas). Defaults to C<0>. Is completely searchable and sortable.
+An integer between -999,999,999 and 99,999,999,999,999 (without the commas). Defaults to C<0>. Is completely searchable and sortable.
 
 =head2 ArrayRefOfInt
 
-An array reference of integers which can have up to 254 elements. Each integer follows the rules of C<Int>. If you need a multi-value integer type, this is the way to go.
+An array reference of integers which can have up to 254 elements. Each integer follows the rules of C<Int>. If you need a multi-value integer type, this is the way to go. See B<Attribute Limits> for special considerations about this type.
 
 =head2 DateTime
 
@@ -55,11 +55,15 @@ Store a precise date in the database. Is searchable and sortable.
 
 =head2 ArrayRefOfDateTime
 
-An array reference of dates which can have up to 254 elements. Each date follows the rules of C<DateTime>. Use this if you need a multi-value date.
+An array reference of dates which can have up to 254 elements. Each date follows the rules of C<DateTime>. Use this if you need a multi-value date. See B<Attribute Limits> for special considerations about this type.
 
 =head2 HashRef
 
-A hash reference. For storage this is serialized into JSON and stored as a C<MediumStr>, therefore it cannot exceed 259,080 characters after serialization. You B<cannot> use it to store a blessed hash reference. It is not searchable, not sortable, and is the slowest field type available. However, it can be quite useful if you need to persist a hash reference.
+A hash reference. For storage this is serialized into JSON and stored as a C<MediumStr>, therefore it cannot exceed 259,080 characters after serialization. You B<cannot> use it to store a blessed hash reference. It is not searchable, not sortable, and is the slowest field type available. However, it can be quite useful if you need to persist a hash reference. See B<Attribute Limits> for special considerations about this type.
+
+=head1 Attribute Limits
+
+SimpleDB Items are limited to 256 attributes each. This means that they can have no more than any combination of names, values, or multi values. So you can have 256 name/value pairs, or you could have one multi-valued attribute with 256 elements, or anything in between. For that reason, be careful when adding ArrayRefOfDateTime, ArrayRefOfInt, ArrayRefOfStr, MediumStr, and HashRef elements to your items. 
 
 =cut
 

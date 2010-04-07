@@ -62,7 +62,7 @@ SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB serv
 
 =head1 DESCRIPTION
 
-SimpleDB::Class gives you a way to persist your objects in Amazon's SimpleDB service search them easily. It hides the mess of web services, sudo SQL, and XML document formats that you'd normally need to deal with to use the service, and gives you a tight clean Perl API to access it.
+SimpleDB::Class gives you a way to persist your objects in Amazon's SimpleDB service search them easily. It hides the mess of web services, pseudo SQL, and XML document formats that you'd normally need to deal with to use the service, and gives you a tight clean Perl API to access it.
 
 On top of being a simple to use ORM that functions in a manner similar to L<DBIx::Class>, SimpleDB::Class has some other niceties that make dealing with SimpleDB easier:
 
@@ -71,10 +71,6 @@ On top of being a simple to use ORM that functions in a manner similar to L<DBIx
 =item *
 
 It uses memcached to cache objects locally so that most of the time you don't have to care that SimpleDB is eventually consistent. This also speeds up many requests. See Eventual Consistency below for details.
-
-=item *
-
-It has cascading retries, which means it automatically attempts to retry failed requests (you have to plan for failure on the net). 
 
 =item *
 
@@ -119,10 +115,6 @@ It allows for multiple similar object types to be stored in a single domain and 
 =item *
 
 It allows for mass updates and deletes on L<SimpleDB::Class::ResultSet>s, which is a nice level of automation to keep your code small.
-
-=item *
-
-It lets you search within a subset of a domain, by letting you do a secondary C<search> on a L<SimpleDB::Class::ResultSet>. And you can continue to narrow the results by C<search>ing over an over on each new result set.
 
 =back
 
