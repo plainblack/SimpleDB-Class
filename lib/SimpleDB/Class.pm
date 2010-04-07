@@ -145,7 +145,7 @@ The following methods are available from this class.
 use Moose;
 use MooseX::ClassAttribute;
 use SimpleDB::Class::Cache;
-use SimpleDB::Class::HTTP;
+use SimpleDB::Client;
 use SimpleDB::Class::Domain;
 use Module::Find;
 
@@ -171,7 +171,7 @@ An array reference of cache servers. See L<SimpleDB::Class::Cache> for details.
 
 =head4 simpledb_uri
 
-An optional L<URI> object to connect to an alternate SimpleDB server. See also L<SimpleDB::Class::HTTP/"simpledb_uri">.
+An optional L<URI> object to connect to an alternate SimpleDB server. See also L<SimpleDB::Client/"simpledb_uri">.
 
 =head4 domain_prefix
 
@@ -259,7 +259,7 @@ has 'secret_key' => (
 
 =head2 simpledb_uri ( )
 
-Returns the L<URI> object passed into the constructor, if any. See also L<SimpleDB::Class::HTTP/"simpledb_uri">.
+Returns the L<URI> object passed into the constructor, if any. See also L<SimpleDB::Client/"simpledb_uri">.
 
 =head2 has_simpledb_uri ( )
 
@@ -319,7 +319,7 @@ sub add_domain_prefix {
 
 =head2 http ( )
 
-Returns the L<SimpleDB::Class::HTTP> instance used to connect to the SimpleDB service.
+Returns the L<SimpleDB::Client> instance used to connect to the SimpleDB service.
 
 =cut
 
@@ -332,7 +332,7 @@ has http => (
                         if ($self->has_simpledb_uri) {
                             $params{simpledb_uri} = $self->simpledb_uri;
                         }
-                        return SimpleDB::Class::HTTP->new(%params);
+                        return SimpleDB::Client->new(%params);
                         },
 );
 
@@ -409,6 +409,7 @@ L<UUID::Tiny>
 L<Exception::Class>
 L<Memcached::libmemcached>
 L<Clone>
+L<SimpleDB::Client>
 
 =head1 TODO
 
@@ -448,31 +449,11 @@ L<http://rt.cpan.org/Public/Dist/Display.html?Name=SimpleDB-Class>
 
 =back
 
-=head1 SEE ALSO
-
-There are other packages you can use to access SimpleDB. I chose not to use them because I wanted something a bit more robust that would allow me to easily map objects to SimpleDB Domain Items. If you're looking for a low level SimpleDB accessor, then you should check out these:
-
-=over
-
-=item L<SimpleDB::Class::HTTP> - This is our interface to AWS SimpleDB, and can work just fine as a stand alone component if you're looking for a simple way to quickly access SimpleDB.
-
-=item Amazon::SimpleDB (L<http://developer.amazonwebservices.com/connect/entry.jspa?externalID=1136>)
-
-A complete and nicely functional low level library made by Amazon itself.
-
-=item L<Amazon::SimpleDB>
-
-A low level SimpleDB accessor that's in its infancy and may be abandoned, but appears to be pretty functional, and of the same scope as Amazon's own module.
-
-=back
-
-In addition to clients, there is at least one other API compatible server out there that basically lets you host your own SimpleDB if you don't want to put it in Amazon's cloud. It's called M/DB. You can read more about it here: L<http://gradvs1.mgateway.com/main/index.html?path=mdb>. Though I haven't tested it, since it's API compatible, you should be able to use SimpleDB::Class with it.
-
 =head1 AUTHOR
 
 JT Smith <jt_at_plainblack_com>
 
-I have to give credit where credit is due: SimpleDB::Class is heavily inspired by L<DBIx::Class> by Matt Trout (and others), and the Amazon::SimpleDB class distributed by Amazon itself (not to be confused with Amazon::SimpleDB written by Timothy Appnel).
+I have to give credit where credit is due: SimpleDB::Class is heavily inspired by L<DBIx::Class> by Matt Trout (and others).
 
 =head1 LEGAL
 

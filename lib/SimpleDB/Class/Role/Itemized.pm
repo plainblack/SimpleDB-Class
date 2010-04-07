@@ -92,7 +92,7 @@ The ItemName of the item to create.
 
 =head3 attributes
 
-An array of attributes as returned by L<SimpleDB::Class::HTTP>.
+An array of attributes as returned by L<SimpleDB::Client>.
 
 =cut
 

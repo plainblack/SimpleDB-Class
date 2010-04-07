@@ -1,4 +1,4 @@
-use Test::More tests => 21;
+use Test::More tests => 20;
 use Test::Deep;
 use lib '../lib';
 
@@ -10,7 +10,6 @@ my $db = SimpleDB::Class->new(secret_key=>'secretxx', access_key=>'accessyy', ca
 
 isa_ok($db, 'SimpleDB::Class');
 isa_ok($db->cache, 'SimpleDB::Class::Cache');
-isa_ok($db->http, 'SimpleDB::Class::HTTP');
 
 use_ok( 'SimpleDB::Class::SQL');
 use_ok( 'SimpleDB::Class::ResultSet');

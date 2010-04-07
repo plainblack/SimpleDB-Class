@@ -41,7 +41,7 @@ Required. A L<SimpleDB::Class::Item> subclass name.
 
 =head4 result
 
-A result as returned from the send_request() method from L<SimpleDB::Class::HTTP>. Either this or a where is required.
+A result as returned from the send_request() method from L<SimpleDB::Client>. Either this or a where is required.
 
 =head4 where
 
