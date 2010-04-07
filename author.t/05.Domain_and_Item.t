@@ -1,4 +1,4 @@
-use Test::More tests => 48;
+use Test::More tests => 49;
 use Test::Deep;
 use lib ('../lib', 'lib');
 $|=1;
@@ -128,6 +128,13 @@ my $bigprops = $domain->insert({start_date=>DateTime->new(year=>2000, month=>5, 
 $foo->cache->flush;
 my $bigprops2 = $domain->find($bigprops->id, consistent=>1);
 is($bigprops2->properties->{really_long_line_to_see_a_multiattribute_hash_ref_work}, $bighashref->{really_long_line_to_see_a_multiattribute_hash_ref_work}, 'long hashref works');
+
+my $rs = $domain->search(limit=>3);
+my $i = 0;
+while ($rs->next) {
+    $i++;
+}
+is($i, 3, 'limits are held');
 
 ok($domain->delete,'deleting domain');
 $parent->delete;

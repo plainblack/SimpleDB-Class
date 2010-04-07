@@ -53,7 +53,7 @@ An order_by clause as defined in L<SimpleDB::Class::SQL>. Optional.
 
 =head4 limit
 
-A limit clause as defined in L<SimpleDB::Class::SQL>. Optional.
+A limit clause as defined in L<SimpleDB::Class::SQL>. Optional. B<NOTE:>SimpleDB defines a limit as the number of results to limit to each Next Token, but SimpleDB::Class::ResultSet enforces the limit to be more like a traditional relational database, so calling C<next()> after the limit will return C<undef> just as if there were no more results left to display.
 
 =head4 consistent
 
@@ -187,7 +187,7 @@ has result => (
 
 =head2 iterator ( )
 
-Returns an integer which represents the current position in the result set as traversed by next().
+Returns an integer which represents the current position in the result set as traversed by C<next()>.
 
 =cut
 
@@ -197,12 +197,25 @@ has iterator => (
     default     => 0,
 );
 
+#--------------------------------------------------------
+
+=head2 limit_counter ( )
+
+Returns an integer representing how many items have been traversed so far by C<next()>. When this reaches the value of C<limit> then no more results will be returned by C<next()>.
+
+=cut
+
+has limit_counter => (
+    is          => 'rw',
+    isa         => 'Int',
+    default     => 0,
+);
 
 #--------------------------------------------------------
 
 =head2 fetch_result ( [ next ] )
 
-Fetches a result, based on a where clause passed into a constructor, and then makes it accessible via the result() method.
+Fetches a result, based on a where clause passed into a constructor, and then makes it accessible via the C<result()> method.
 
 =head3 next
 
@@ -409,6 +422,12 @@ Returns the next result in the result set. Also fetches th next partial result s
 
 sub next {
     my ($self) = @_;
+
+    # handle limit counter
+    if ($self->has_limit && $self->limit_counter >= $self->limit) {
+        return undef;
+    }
+
     # get the current results
     my $result = ($self->has_result) ? $self->result : $self->fetch_result;
     my $items = [];
@@ -467,6 +486,9 @@ sub next {
     foreach my $attribute (keys %set) {
         $itemobj->$attribute( $set{$attribute} );
     }
+
+    # increment limit counter
+    $self->limit_counter($self->limit_counter + 1);
 
     return $itemobj;
 }
