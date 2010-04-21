@@ -1,4 +1,4 @@
-use Test::More tests => 49;
+use Test::More tests => 51;
 use Test::Deep;
 use lib ('../lib', 'lib');
 $|=1;
@@ -135,6 +135,10 @@ while ($rs->next) {
     $i++;
 }
 is($i, 3, 'limits are held');
+
+my $ids = $domain->fetch_ids(where => { color=>'orange' }, consistent=>1);
+is(scalar(@{$ids}), 3, 'fetch_ids gets the right amount');
+ok($bigprops->id ~~ @{$ids}, 'fetch_ids returns expected id');
 
 ok($domain->delete,'deleting domain');
 $parent->delete;

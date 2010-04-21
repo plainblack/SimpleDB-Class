@@ -1,3 +1,6 @@
+1.0500 2010-04-21
+ - Added fetch_ids() to Domain.
+
 1.0400 2010-04-07
  - Added to_array_ref() in ResultSet.
  - Fixed undefined value exception calling find() on non-existant item.
