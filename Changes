@@ -1,3 +1,6 @@
+1.0501 2010-05-04
+ - Small 1% performance improvement through lazy loading complex attribute types.
+
 1.0500 2010-04-21
  - Added fetch_ids() to Domain.
 

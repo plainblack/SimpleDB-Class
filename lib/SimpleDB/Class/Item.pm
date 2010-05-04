@@ -101,6 +101,9 @@ sub add_attributes {
             coerce  => 1,
             default => $attributes{$name}{default} || $defaults{$type},
             );
+        if ($type ne 'Str') { # don't do any work we don't have to
+            $properties{lazy} = 1;
+        }
         if (defined $attributes{$name}{trigger}) {
             $properties{trigger} = $attributes{$name}{trigger};
         }
