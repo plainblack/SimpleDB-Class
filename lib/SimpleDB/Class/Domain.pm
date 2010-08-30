@@ -71,7 +71,6 @@ Returns the name determined automatically by the item_class passed into the cons
 
 has name => (
     is          => 'rw',
-    isa         => 'Str',
     default     => undef,
 );
 

@@ -262,7 +262,6 @@ Returns a boolean indicating whether the user has overridden the URI.
 has simpledb_uri => (
     is          => 'ro',
     predicate   => 'has_simpledb_uri',
-    default     => undef,
 );
 
 

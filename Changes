@@ -1,3 +1,6 @@
+1.0502 2010-08-30
+ - Small fix due to a change in how Moose handles attributes.
+
 1.0501 2010-05-04
  - Small 1% performance improvement through lazy loading complex attribute types.
 
