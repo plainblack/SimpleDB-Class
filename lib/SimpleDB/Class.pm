@@ -39,9 +39,9 @@ SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB serv
  extends 'SimpleDB::Class::Item';
 
  __PACKAGE__->set_domain_name('publisher');
- __PACKAGE__->add_attributes({
+ __PACKAGE__->add_attributes(
      name   => { isa => 'Str' },
- });
+ );
  __PACKAGE__->has_many('books', 'Library::Book', 'publisherId');
 
  1;
