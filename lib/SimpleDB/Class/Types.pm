@@ -177,10 +177,10 @@ coerce SdbDecimalAsStr,
     from SdbDecimal, via { 
         my @parts = split(/\./, $_);
         if ($parts[1]) {
-            sprintf("dec%015d.%s", ($parts[0] + 1000000000), $parts[1] );
+            return sprintf("dec%015d.%s", ($parts[0] + 1000000000), $parts[1] );
         }
         else {
-            sprintf("dec%015d", ($parts[0] + 1000000000));
+            return sprintf("dec%015d", ($parts[0] + 1000000000));
         }
     };
 
