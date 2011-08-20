@@ -175,12 +175,13 @@ coerce SdbIntAsStr,
 
 coerce SdbDecimalAsStr,
     from SdbDecimal, via { 
-        my @parts = split(/\./, $_);
+        my $num = $_ + 1000000000;
+        my @parts = split(/\./, $num);
         if ($parts[1]) {
-            return sprintf("dec%015d.%s", ($parts[0] + 1000000000), $parts[1] );
+            return sprintf("dec%015d.%s", @parts );
         }
         else {
-            return sprintf("dec%015d", ($parts[0] + 1000000000));
+            return sprintf("dec%015d", $parts[0] );
         }
     };
 
@@ -243,10 +244,15 @@ coerce SdbInt,
 
 coerce SdbDecimal,
     from SdbStr, via {
-        if ($_ =~ m/^dec(\d{15})(\.(\d+))?$/) {
-            my $num = $1 - 1000000000;
-            $num .= '.' . $3 if $3;
-            return $num
+        if ($_ =~ m/^dec((\d{15})(\.(\d+))?)$/) {
+            if ($3) {
+                # Rounding errors correction
+                my $precision = length($4); 
+                return sprintf("%.$precision" . 'f', $1 - 1000000000);
+            }
+            else {
+                return $1 - 1000000000;
+            }
         }
         else {
             return 0;
