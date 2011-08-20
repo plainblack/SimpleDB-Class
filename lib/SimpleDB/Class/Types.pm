@@ -77,10 +77,11 @@ use MooseX::Types
     -declare => [qw(SdbArrayRefOfDateTime SdbDateTime
         SdbArrayRefOfStr SdbStr SdbMediumStr
         SdbArrayRefOfInt SdbInt SdbIntAsStr SdbArrayRefOfIntAsStr
+        SdbArrayRefOfDecimal SdbDecimal SdbDecimalAsStr SdbArrayRefOfDecimalAsStr
         SdbHashRef
     )];
 
-use MooseX::Types::Moose qw/Int HashRef ArrayRef Str Undef/;
+use MooseX::Types::Moose qw/Num Int HashRef ArrayRef Str Undef/;
 
 ## Types
 
@@ -107,15 +108,29 @@ subtype SdbInt,
     as Int,
     where { $_ =~ m/^[-]?\d+$/ };
 
+subtype SdbDecimal,
+    as Num,
+    where { $_ =~ m/^[-]?\d+(\.\d+)?$/ };
+
 subtype SdbIntAsStr,
     as Str,
     where { $_ =~ m/^int\d{15}/ };
 
+subtype SdbDecimalAsStr,
+    as Str,
+    where { $_ =~ m/^dec\d{15}(\.\d+)?/ };
+
 subtype SdbArrayRefOfInt,
     as ArrayRef[SdbInt];
 
+subtype SdbArrayRefOfDecimal,
+    as ArrayRef[SdbDecimal];
+
 subtype SdbArrayRefOfIntAsStr,
     as ArrayRef[SdbIntAsStr];
+
+subtype SdbArrayRefOfDecimalAsStr,
+    as ArrayRef[SdbDecimalAsStr];
 
 subtype SdbHashRef,
     as HashRef;
@@ -158,6 +173,17 @@ coerce SdbStr,
 coerce SdbIntAsStr,
     from SdbInt, via { sprintf("int%015d", ($_ + 1000000000)) };
 
+coerce SdbDecimalAsStr,
+    from SdbDecimal, via { 
+        my @parts = split(/\./, $_);
+        if ($parts[1]) {
+            sprintf("dec%015d.%s", ($parts[0] + 1000000000), $parts[1] );
+        }
+        else {
+            sprintf("dec%015d", ($parts[0] + 1000000000));
+        }
+    };
+
 coerce SdbArrayRefOfStr,
     from SdbArrayRefOfDateTime, via { [ map { to_SdbStr($_) } @{$_} ] },
     from SdbMediumStr, via { slice_string($_) },
@@ -191,8 +217,15 @@ coerce SdbArrayRefOfInt,
     from SdbArrayRefOfStr, via { [ map { to_SdbInt($_) } @{$_} ] },
     from SdbInt, via { [ $_ ] };
 
+coerce SdbArrayRefOfDecimal,
+    from SdbArrayRefOfStr, via { [ map { to_SdbDecimal($_) } @{$_} ] },
+    from SdbDecimal, via { [ $_ ] };
+
 coerce SdbArrayRefOfIntAsStr,
     from SdbArrayRefOfInt, via { [ map { to_SdbIntAsStr($_) } @{$_} ] };
+
+coerce SdbArrayRefOfDecimalAsStr,
+    from SdbArrayRefOfDecimal, via { [ map { to_SdbDecimalAsStr($_) } @{$_} ] };
 
 coerce SdbInt,
     from SdbStr, via { 
@@ -206,6 +239,23 @@ coerce SdbInt,
     from SdbArrayRefOfStr, via { to_SdbInt($_->[0]) },
     from SdbArrayRefOfInt, via { $_->[0] },
     from Undef, via { 0 };
+
+
+coerce SdbDecimal,
+    from SdbStr, via {
+        if ($_ =~ m/^dec(\d{15})(\.(\d+))?$/) {
+            my $num = $1 - 1000000000;
+            $num .= '.' . $3 if $3;
+            return $num
+        }
+        else {
+            return 0;
+        }
+    },
+    from SdbArrayRefOfStr, via { to_SdbDecimal($_->[0]) },
+    from SdbArrayRefOfDecimal, via { $_->[0] },
+    from Undef, via { 0 };
+
 
 coerce SdbHashRef,
     from Undef, via { {} },
