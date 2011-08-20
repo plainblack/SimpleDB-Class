@@ -99,7 +99,7 @@ sub create {
     my ($self) = @_;
     my $db = $self->simpledb;
     $db->http->send_request('CreateDomain', {
-        DomainName => $db->add_domain_prefix($self->name),
+        DomainName => $db->add_domain_prefix($self->name)
     });
 }
 

@@ -584,6 +584,9 @@ sub stringify_value {
     if ($isa =~ /Int$/) {
         return to_SdbIntAsStr($value); 
     }
+    elsif ($isa =~ /Decimal$/) {
+        return to_SdbDecimalAsStr($value);
+    }
     else {
         return to_SdbStr($value);
     }
@@ -625,6 +628,12 @@ sub stringify_values {
     }
     elsif ($isa eq 'SimpleDB::Class::Types::SdbInt') {
         return to_SdbIntAsStr($value); 
+    }
+    if ($isa eq 'SimpleDB::Class::Types::SdbArrayRefOfDecimal') {
+        return to_SdbArrayRefOfDecimalAsStr($value);
+    }
+    elsif ($isa eq 'SimpleDB::Class::Types::SdbDecimal') {
+        return to_SdbDecimalAsStr($value);
     }
     elsif ($isa =~ m/ArrayRefOf|HashRef|MediumStr/) {
         return to_SdbArrayRefOfStr($value);
