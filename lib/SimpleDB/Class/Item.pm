@@ -373,6 +373,13 @@ Returns the simpledb passed into the constructor.
 has simpledb => (
     is          => 'ro',
     required    => 1,
+    trigger => sub {
+        my ($self, $new, $old)  = @_;
+
+        if ($new->has_domain_prefix) {
+            $self->_set_domain_name_fq($new->domain_prefix . $self->domain_name);
+        }
+    },
 );
 
 #--------------------------------------------------------
@@ -388,6 +395,22 @@ has id => (
     isa         => SdbStr,
     builder     => 'generate_uuid',
     lazy        => 1,
+);
+
+#--------------------------------------------------------
+
+
+=head2 domain_name_fq ( )
+
+Fully qualified domain name
+
+=cut
+
+has domain_name_fq => (
+    is          => 'ro',
+    default     => undef,
+    lazy        => 1,
+    writer      => '_set_domain_name_fq',
 );
 
 #--------------------------------------------------------

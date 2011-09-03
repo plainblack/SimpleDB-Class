@@ -76,6 +76,22 @@ has name => (
 
 #--------------------------------------------------------
 
+=head2 name_fq ( )
+
+Returns the fully qualified name determined automatically by the item_class passed into the constructor.
+
+=cut
+
+has name_fq => (
+    is          => 'ro',
+    default     => undef,
+    lazy        => 1,
+    writer => '_set_name_fq',
+);
+
+#--------------------------------------------------------
+#
+
 =head2 simpledb ( )
 
 Returns the L<SimpleDB::Class> object set in the constructor.
@@ -85,6 +101,15 @@ Returns the L<SimpleDB::Class> object set in the constructor.
 has simpledb => (
     is          => 'ro',
     required    => 1,
+    trigger     => sub {
+        my ($self, $new, $old) = @_;
+        if ($new->has_domain_prefix) {
+            $self->_set_name_fq($new->domain_prefix . $self->name);
+        }
+        else {
+            $self->_set_name_fq($self->name);
+        } 
+    },
 );
 
 #--------------------------------------------------------
