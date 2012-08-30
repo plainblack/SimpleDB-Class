@@ -51,6 +51,8 @@ SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB serv
  use DateTime;
 
  my $library = Library->new(access_key => 'xxx', secret_key => 'yyy', cache_servers=>\@servers );
+
+ my $new_book = $library->domain('book')->insert({ title => 'Three little pigs' });
   
  my $specific_book = $library->domain('book')->find('id goes here');
 
