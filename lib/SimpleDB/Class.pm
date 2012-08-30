@@ -23,7 +23,7 @@ SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB serv
  __PACKAGE__->set_domain_name('book');
  __PACKAGE__->add_attributes(
      title          => { isa => 'Str', default => 'Untitled' },
-     publish_date   => { isa => 'Date' },
+     publish_date   => { isa => 'DateTime' },
      edition        => { isa => 'Int', default => 1 },
      isbn           => { isa => 'Str' },
      publisherId    => { isa => 'Str' },
