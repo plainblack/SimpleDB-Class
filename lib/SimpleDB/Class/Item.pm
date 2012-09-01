@@ -326,6 +326,8 @@ sub _castor_attribute {
 
 Update a bunch of attributes all at once. Returns a reference to L<$self> so it can be chained into other methods.
 
+Usually you will want to call put() to actually save this back to SimpleDB.
+
 =head3 attributes
 
 A hash reference containing attribute names and values.
