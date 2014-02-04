@@ -1,4 +1,4 @@
-use Test::More tests => 24;
+use Test::More tests => 48;
 use lib '../lib';
 use DateTime;
 use DateTime::Format::Strptime;
@@ -22,6 +22,45 @@ is(to_SdbArrayRefOfInt(\@aofis)->[1], $aofi[1], 'array of str converts to array 
 ok(ref to_SdbArrayRefOfInt(1) eq 'ARRAY', 'coerce int to array');
 is(to_SdbInt(['int000000999999996']), -4, 'coerce array of str to int');
 is(to_SdbInt([5]), 5, 'coerce array of int to int');
+
+# decimal - whole number 
+is(to_SdbDecimalAsStr(-4), 'dec000000999999996', 'coersion from decimal to string');
+ok(is_SdbDecimal(-4), 'can identify decimal');
+is(to_SdbDecimal('dec000000999999996'), -4, 'coersion from string to decimal');
+my @aofi = (1,-2,3);
+my @aofis = ('dec000001000000001','dec000000999999998','dec000001000000003');
+is(to_SdbArrayRefOfDecimalAsStr(\@aofi)->[1], $aofis[1], 'array of decimal converts to array of str');
+is(to_SdbArrayRefOfDecimal(\@aofis)->[1], $aofi[1], 'array of str converts to array of decimal');
+ok(ref to_SdbArrayRefOfDecimal(1) eq 'ARRAY', 'coerce decimal to array');
+is(to_SdbDecimal(['dec000000999999996']), -4, 'coerce decimal of str to decimal');
+is(to_SdbDecimal([5]), 5, 'coerce array of decimal to decimal');
+
+
+# decimal 
+is(to_SdbDecimalAsStr(-4.25), 'dec000000999999995.75', 'coersion from decimal to string');
+ok(is_SdbDecimal(-4.25), 'can identify decimal');
+is(to_SdbDecimal('dec000000999999995.75'), -4.25, 'coersion from string to decimal');
+my @aofi = (1.25,-2.36,3.47);
+my @aofis = ('dec000001000000001.25','dec000000999999997.64','dec000001000000003.47');
+is(to_SdbArrayRefOfDecimalAsStr(\@aofi)->[1], $aofis[1], 'array of decimal converts to array of str');
+is(to_SdbArrayRefOfDecimal(\@aofis)->[1], $aofi[1], 'array of str converts to array of decimal');
+ok(ref to_SdbArrayRefOfDecimal(1) eq 'ARRAY', 'coerce decimal to array');
+is(to_SdbDecimal(['dec000000999999995.75']), -4.25, 'coerce decimal of str to decimal');
+is(to_SdbDecimal([5.25]), 5.25, 'coerce array of decimal to decimal');
+
+# decimal
+is(to_SdbDecimalAsStr(-76.486881), 'dec000000999999923.513119', 'coersion from decimal to string');
+ok(is_SdbDecimal(-76.486881), 'can identify decimal');
+is(to_SdbDecimal('dec000000999999923.513119'), -76.486881, 'coersion from string to decimal');
+my @aofi = (38.97761,-76.486881);
+my @aofis = ('dec000001000000038.97761','dec000000999999923.513119');
+is(to_SdbArrayRefOfDecimalAsStr(\@aofi)->[1], $aofis[1], 'array of decimal converts to array of str');
+is(to_SdbArrayRefOfDecimal(\@aofis)->[1], $aofi[1], 'array of str converts to array of decimal');
+ok(ref to_SdbArrayRefOfDecimal(1) eq 'ARRAY', 'coerce decimal to array');
+is(to_SdbDecimal(['dec000000999999923.513119']), -76.486881, 'coerce decimal of str to decimal');
+is(to_SdbDecimal([38.97761]), 38.97761, 'coerce array of decimal to decimal');
+
+
 
 # date
 my $dt = DateTime->now;

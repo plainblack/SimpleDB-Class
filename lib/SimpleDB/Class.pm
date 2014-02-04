@@ -280,7 +280,6 @@ Returns a boolean indicating whether the user has specified a domain_prefix.
 has domain_prefix => (
     is          => 'ro',
     predicate   => 'has_domain_prefix',
-    default     => undef,
 );
 
 #--------------------------------------------------------

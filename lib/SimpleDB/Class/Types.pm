@@ -11,11 +11,12 @@ The allowable value types for L<SimpleDB::Class::Item> attributes.
 =head1 SYNOPSIS
 
  Type                   | Default        | Range
- -----------------------+----------------+-----------------------------------------------
+ -----------------------+----------------+----------------------------------------------------
  Str                    | ''             | 0 to 1024 characters 
  MediumStr              | ''             | 0 to 259,080 chracters
  ArrayRefOfStr          | []             | 254 Str elements
  Int                    | 0              | -999,999,999 to 99,999,999,999,999 (no commas)
+ Decimal                | 0              | -999,999,999.0 to 99,999,999,999,999.9999999999 
  ArrayRefOfInt          | []             | 254 Int elements
  DateTime               | now()          | Any DateTime object
  ArrayRefOfDateTime     | []             | 254 DateTime elements
@@ -41,9 +42,20 @@ A string of up to 259,080 characters. Defaults to C<''>. Use this B<only> if you
 
 An integer between -999,999,999 and 99,999,999,999,999 (without the commas). Defaults to C<0>. Is completely searchable and sortable.
 
+
 =head2 ArrayRefOfInt
 
 An array reference of integers which can have up to 254 elements. Each integer follows the rules of C<Int>. If you need a multi-value integer type, this is the way to go. See B<Attribute Limits> for special considerations about this type.
+
+=head2 Decimal
+
+An integer between -999,999,999.0 and 99,999,999,999,999.9999999999 (without the commas). Defaults to C<0>. Is completely searchable and sortable. Decimal can actually span past the decimal point until 1021 total characters have been used. Anything more than 8 places past the decimal point however (usually used for geocoded lat/long) is not recommended.
+
+
+=head2 ArrayRefOfDecimal
+
+An array reference of decimals which can have up to 254 elements. Each integer follows the rules of C<Decimal>. If you need a multi-value decimal type, this is the way to go. See B<Attribute Limits> for special considerations about this type.
+
 
 =head2 DateTime
 
@@ -63,7 +75,7 @@ A hash reference. For storage this is serialized into JSON and stored as a C<Med
 
 =head1 Attribute Limits
 
-SimpleDB Items are limited to 256 attributes each. This means that they can have no more than any combination of names, values, or multi values. So you can have 256 name/value pairs, or you could have one multi-valued attribute with 256 elements, or anything in between. For that reason, be careful when adding ArrayRefOfDateTime, ArrayRefOfInt, ArrayRefOfStr, MediumStr, and HashRef elements to your items. 
+SimpleDB Items are limited to 256 attributes each. This means that they can have no more than any combination of names, values, or multi values. So you can have 256 name/value pairs, or you could have one multi-valued attribute with 256 elements, or anything in between. For that reason, be careful when adding ArrayRefOfDateTime, ArrayRefOfInt, ArrayRefOfDecimal, ArrayRefOfStr, MediumStr, and HashRef elements to your items. 
 
 =cut
 
@@ -77,10 +89,11 @@ use MooseX::Types
     -declare => [qw(SdbArrayRefOfDateTime SdbDateTime
         SdbArrayRefOfStr SdbStr SdbMediumStr
         SdbArrayRefOfInt SdbInt SdbIntAsStr SdbArrayRefOfIntAsStr
+        SdbArrayRefOfDecimal SdbDecimal SdbDecimalAsStr SdbArrayRefOfDecimalAsStr
         SdbHashRef
     )];
 
-use MooseX::Types::Moose qw/Int HashRef ArrayRef Str Undef/;
+use MooseX::Types::Moose qw/Num Int HashRef ArrayRef Str Undef/;
 
 ## Types
 
@@ -107,15 +120,29 @@ subtype SdbInt,
     as Int,
     where { $_ =~ m/^[-]?\d+$/ };
 
+subtype SdbDecimal,
+    as Num,
+    where { $_ =~ m/^[-]?\d+(\.\d+)?$/ };
+
 subtype SdbIntAsStr,
     as Str,
     where { $_ =~ m/^int\d{15}/ };
 
+subtype SdbDecimalAsStr,
+    as Str,
+    where { $_ =~ m/^dec\d{15}(\.\d+)?/ };
+
 subtype SdbArrayRefOfInt,
     as ArrayRef[SdbInt];
 
+subtype SdbArrayRefOfDecimal,
+    as ArrayRef[SdbDecimal];
+
 subtype SdbArrayRefOfIntAsStr,
     as ArrayRef[SdbIntAsStr];
+
+subtype SdbArrayRefOfDecimalAsStr,
+    as ArrayRef[SdbDecimalAsStr];
 
 subtype SdbHashRef,
     as HashRef;
@@ -158,6 +185,18 @@ coerce SdbStr,
 coerce SdbIntAsStr,
     from SdbInt, via { sprintf("int%015d", ($_ + 1000000000)) };
 
+coerce SdbDecimalAsStr,
+    from SdbDecimal, via { 
+        my $num = $_ + 1000000000;
+        my @parts = split(/\./, $num);
+        if ($parts[1]) {
+            return sprintf("dec%015d.%s", @parts );
+        }
+        else {
+            return sprintf("dec%015d", $parts[0] );
+        }
+    };
+
 coerce SdbArrayRefOfStr,
     from SdbArrayRefOfDateTime, via { [ map { to_SdbStr($_) } @{$_} ] },
     from SdbMediumStr, via { slice_string($_) },
@@ -191,8 +230,15 @@ coerce SdbArrayRefOfInt,
     from SdbArrayRefOfStr, via { [ map { to_SdbInt($_) } @{$_} ] },
     from SdbInt, via { [ $_ ] };
 
+coerce SdbArrayRefOfDecimal,
+    from SdbArrayRefOfStr, via { [ map { to_SdbDecimal($_) } @{$_} ] },
+    from SdbDecimal, via { [ $_ ] };
+
 coerce SdbArrayRefOfIntAsStr,
     from SdbArrayRefOfInt, via { [ map { to_SdbIntAsStr($_) } @{$_} ] };
+
+coerce SdbArrayRefOfDecimalAsStr,
+    from SdbArrayRefOfDecimal, via { [ map { to_SdbDecimalAsStr($_) } @{$_} ] };
 
 coerce SdbInt,
     from SdbStr, via { 
@@ -206,6 +252,29 @@ coerce SdbInt,
     from SdbArrayRefOfStr, via { to_SdbInt($_->[0]) },
     from SdbArrayRefOfInt, via { $_->[0] },
     from Undef, via { 0 };
+
+
+coerce SdbDecimal,
+    from SdbStr, via {
+        if ($_ =~ m/^dec((\d{15})(\.(\d+))?)$/) {
+            if ($3) {
+                # Rounding error correction
+                # http://answers.oreilly.com/topic/415-how-to-round-floating-point-numbers-in-perl/
+                my $precision = length($4); 
+                return sprintf("%.$precision" . 'f', $1 - 1000000000);
+            }
+            else {
+                return $1 - 1000000000;
+            }
+        }
+        else {
+            return 0;
+        }
+    },
+    from SdbArrayRefOfStr, via { to_SdbDecimal($_->[0]) },
+    from SdbArrayRefOfDecimal, via { $_->[0] },
+    from Undef, via { 0 };
+
 
 coerce SdbHashRef,
     from Undef, via { {} },
