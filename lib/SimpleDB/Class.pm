@@ -23,7 +23,7 @@ SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB serv
  __PACKAGE__->set_domain_name('book');
  __PACKAGE__->add_attributes(
      title          => { isa => 'Str', default => 'Untitled' },
-     publish_date   => { isa => 'Date' },
+     publish_date   => { isa => 'DateTime' },
      edition        => { isa => 'Int', default => 1 },
      isbn           => { isa => 'Str' },
      publisherId    => { isa => 'Str' },
@@ -51,6 +51,8 @@ SimpleDB::Class - An Object Relational Mapper (ORM) for the Amazon SimpleDB serv
  use DateTime;
 
  my $library = Library->new(access_key => 'xxx', secret_key => 'yyy', cache_servers=>\@servers );
+
+ my $new_book = $library->domain('book')->insert({ title => 'Three little pigs' });
   
  my $specific_book = $library->domain('book')->find('id goes here');
 
